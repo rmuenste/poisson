@@ -1,0 +1,74 @@
+:root {
+  --bg-top: #fff6eb;
+  --bg-bottom: #efe5d2;
+  --panel: #fffaf2;
+  --accent: #d86e3b;
+  --accent-deep: #91411f;
+  --text-main: #1e2330;
+  --text-muted: #5f6778;
+  --font-body: "Instrument Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
+  font-family: var(--font-body);
+  line-height: 1.5;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at top left, rgba(252, 223, 169, 0.54), transparent 28%),
+    radial-gradient(circle at top right, rgba(233, 163, 120, 0.26), transparent 23%),
+    linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  font-size: clamp(2.8rem, 5vw, 4.4rem);
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+  margin-bottom: 16px;
+}
+
+h2 {
+  font-size: 1.35rem;
+  margin-bottom: 6px;
+}
+
+h3 {
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: rgba(255, 245, 232, 0.9);
+  padding: 0.08rem 0.34rem;
+  border-radius: 0.4rem;
+}
+
+a {
+  color: inherit;
+}

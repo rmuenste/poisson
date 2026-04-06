@@ -1,0 +1,404 @@
+.app-shell {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 32px 24px 56px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(280px, 0.9fr);
+  gap: 24px;
+  align-items: stretch;
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent-deep);
+  font-size: 0.76rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.lede {
+  max-width: 70ch;
+  color: var(--text-muted);
+}
+
+.hero-card,
+.panel-card,
+.stat-card,
+.mini-card {
+  background: rgba(255, 251, 245, 0.88);
+  border: 1px solid rgba(140, 88, 58, 0.16);
+  border-radius: 22px;
+  box-shadow: 0 18px 44px rgba(122, 84, 54, 0.09);
+}
+
+.hero-card {
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  align-content: start;
+}
+
+.metric,
+.stat-card,
+.mini-card {
+  display: grid;
+  gap: 6px;
+}
+
+.metric span,
+.stat-card span,
+.mini-card span,
+.control-row span,
+.small-note {
+  color: var(--text-muted);
+}
+
+.metric strong,
+.stat-card strong,
+.mini-card strong {
+  font-size: 1.35rem;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.control-panel,
+.workspace {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+}
+
+.panel-card {
+  padding: 22px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  padding: 18px;
+}
+
+.stage-view {
+  display: grid;
+  gap: 18px;
+}
+
+.control-row {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.control-row div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+
+.control-row input,
+.control-row select,
+.stage-button {
+  width: 100%;
+}
+
+.stage-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.stage-button {
+  border: 1px solid rgba(165, 101, 61, 0.22);
+  border-radius: 14px;
+  background: rgba(255, 248, 239, 0.95);
+  color: var(--text-main);
+  padding: 12px 14px;
+  text-transform: capitalize;
+  text-align: left;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.stage-button:hover {
+  transform: translateY(-1px);
+}
+
+.stage-button.active {
+  background: linear-gradient(135deg, rgba(216, 110, 59, 0.16), rgba(233, 186, 82, 0.2));
+  border-color: rgba(180, 91, 44, 0.38);
+}
+
+.compact-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: start;
+}
+
+.badge {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(216, 110, 59, 0.12);
+  color: var(--accent-deep);
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.mesh-svg,
+.reference-svg,
+.solution-svg,
+.sparsity-svg {
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+}
+
+.mesh-svg rect,
+.reference-svg rect,
+.solution-svg rect,
+.sparsity-svg rect {
+  fill: rgba(248, 240, 229, 0.78);
+}
+
+.triangle {
+  fill: rgba(213, 190, 161, 0.34);
+  stroke: rgba(68, 72, 84, 0.34);
+  stroke-width: 1;
+}
+
+.triangle.selected {
+  fill: rgba(216, 110, 59, 0.38);
+  stroke: rgba(119, 46, 14, 0.92);
+  stroke-width: 2.2;
+}
+
+.reference-triangle-shape {
+  fill: rgba(216, 110, 59, 0.18);
+  stroke: rgba(119, 46, 14, 0.92);
+  stroke-width: 2.2;
+}
+
+.reference-axis {
+  stroke: rgba(31, 36, 48, 0.42);
+  stroke-width: 1.4;
+}
+
+.reference-node {
+  fill: rgba(47, 143, 131, 0.96);
+}
+
+.reference-axis-label,
+.reference-node-label,
+.reference-fill-label,
+.basis-label {
+  font-size: 0.82rem;
+  fill: var(--text-main);
+  font-family: var(--font-mono);
+}
+
+.reference-fill-label {
+  font-size: 1rem;
+}
+
+.basis-gallery {
+  display: grid;
+  gap: 12px;
+}
+
+.basis-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 248, 239, 0.78);
+  border: 1px solid rgba(165, 101, 61, 0.14);
+}
+
+.basis-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.basis-heading span {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+}
+
+.plotly-surface {
+  width: 100%;
+  min-height: 260px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 248, 239, 0.82);
+  border: 1px solid rgba(165, 101, 61, 0.14);
+}
+
+.table-grid,
+.note-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mini-card {
+  padding: 16px;
+}
+
+.math-block {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(246, 236, 222, 0.9);
+  overflow-x: auto;
+}
+
+.quadrature-table,
+.matrix {
+  display: grid;
+  gap: 8px;
+}
+
+.quadrature-table .row,
+.matrix-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+}
+
+.quadrature-table .header {
+  color: var(--text-muted);
+}
+
+.matrix-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.matrix-row-highlight {
+  background: rgba(216, 110, 59, 0.06);
+  border-radius: 10px;
+}
+
+.matrix-cell {
+  display: inline-block;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+
+.matrix-cell-hit {
+  background: rgba(216, 110, 59, 0.2);
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+.mapping-diagram {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 10px 12px;
+  align-items: center;
+}
+
+.formula-matrix {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.formula-explainer {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(246, 236, 222, 0.82);
+  border: 1px solid rgba(165, 101, 61, 0.14);
+}
+
+.formula-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.formula-cell {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(255, 248, 239, 0.86);
+  border: 1px solid rgba(165, 101, 61, 0.14);
+}
+
+.formula-symbol {
+  font-family: var(--font-mono);
+  color: var(--accent-deep);
+  font-size: 0.82rem;
+}
+
+.formula-text {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.mapping-box {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(165, 101, 61, 0.16);
+  background: rgba(255, 248, 239, 0.86);
+}
+
+.mapping-box span {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.mapping-arrow {
+  color: var(--accent-deep);
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.sparsity-svg circle {
+  fill: rgba(185, 82, 41, 0.85);
+}
+
+.sparsity-svg .sparsity-hit {
+  fill: rgba(47, 143, 131, 0.95);
+}
+
+@media (max-width: 1100px) {
+  .hero,
+  .layout,
+  .summary-grid,
+  .table-grid,
+  .note-grid {
+    grid-template-columns: 1fr;
+  }
+}
