@@ -8,16 +8,19 @@ export type MeshNode = {
   point: Vector2
 }
 
-export type TriangleElement = {
+export type ElementKind = 'triangle' | 'quad'
+
+export type MeshElement = {
   id: number
-  nodeIds: [number, number, number]
+  nodeIds: number[]
 }
 
 export type Mesh = {
   nodes: MeshNode[]
-  elements: TriangleElement[]
+  elements: MeshElement[]
   boundaryNodeIds: Set<number>
   divisions: number
+  elementKind: ElementKind
 }
 
 export type MeshSummary = {
@@ -25,6 +28,7 @@ export type MeshSummary = {
   divisions: number
   nodeCount: number
   elementCount: number
+  elementKind: ElementKind
 }
 
 export function triangleArea(a: Vector2, b: Vector2, c: Vector2): number {
@@ -43,9 +47,11 @@ export function averagePoint(points: Vector2[]): Vector2 {
   }
 }
 
-export function createStructuredTriangularMesh(divisions: number): Mesh {
+function buildStructuredNodes(divisions: number): {
+  nodes: MeshNode[]
+  boundaryNodeIds: Set<number>
+} {
   const nodes: MeshNode[] = []
-  const elements: TriangleElement[] = []
   const boundaryNodeIds = new Set<number>()
   const step = 1 / divisions
 
@@ -60,6 +66,13 @@ export function createStructuredTriangularMesh(divisions: number): Mesh {
       }
     }
   }
+
+  return { nodes, boundaryNodeIds }
+}
+
+export function createStructuredTriangularMesh(divisions: number): Mesh {
+  const { nodes, boundaryNodeIds } = buildStructuredNodes(divisions)
+  const elements: MeshElement[] = []
 
   let elementId = 0
   for (let j = 0; j < divisions; j += 1) {
@@ -83,7 +96,30 @@ export function createStructuredTriangularMesh(divisions: number): Mesh {
     }
   }
 
-  return { nodes, elements, boundaryNodeIds, divisions }
+  return { nodes, elements, boundaryNodeIds, divisions, elementKind: 'triangle' }
+}
+
+export function createStructuredQuadMesh(divisions: number): Mesh {
+  const { nodes, boundaryNodeIds } = buildStructuredNodes(divisions)
+  const elements: MeshElement[] = []
+
+  let elementId = 0
+  for (let j = 0; j < divisions; j += 1) {
+    for (let i = 0; i < divisions; i += 1) {
+      const lowerLeft = j * (divisions + 1) + i
+      const lowerRight = lowerLeft + 1
+      const upperLeft = lowerLeft + divisions + 1
+      const upperRight = upperLeft + 1
+
+      elements.push({
+        id: elementId,
+        nodeIds: [lowerLeft, lowerRight, upperRight, upperLeft],
+      })
+      elementId += 1
+    }
+  }
+
+  return { nodes, elements, boundaryNodeIds, divisions, elementKind: 'quad' }
 }
 
 export function summarizeMesh(mesh: Mesh, label: string): MeshSummary {
@@ -92,5 +128,6 @@ export function summarizeMesh(mesh: Mesh, label: string): MeshSummary {
     divisions: mesh.divisions,
     nodeCount: mesh.nodes.length,
     elementCount: mesh.elements.length,
+    elementKind: mesh.elementKind,
   }
 }

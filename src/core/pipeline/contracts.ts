@@ -6,7 +6,7 @@ import type {
 } from '../algebra/linearAlgebra.ts'
 import type { IProblemDefinition } from '../domain/problem.ts'
 import type { IFiniteElement, IFiniteElementSpace } from '../fem/elements.ts'
-import type { Mesh, MeshSummary } from '../fem/mesh.ts'
+import type { ElementKind, Mesh, MeshSummary } from '../fem/mesh.ts'
 import type { WeakForm } from '../fem/weakForm.ts'
 import type { SolutionSummary } from '../postprocess/postprocess.ts'
 import type { QuadratureKind, IQuadratureRule } from '../quadrature/quadrature.ts'
@@ -15,6 +15,7 @@ import type { AssemblyTrace, SolverTrace } from '../tracing/traces.ts'
 export type SimulationConfig = {
   baseDivisions: number
   refinementLevels: number
+  elementKind: ElementKind
   quadratureKind: QuadratureKind
   selectedElementId: number
 }

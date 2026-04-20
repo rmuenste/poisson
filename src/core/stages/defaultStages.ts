@@ -6,13 +6,16 @@ import {
 } from '../algebra/linearAlgebra.ts'
 import { UnitSquarePoissonProblem } from '../domain/problem.ts'
 import {
+  BilinearQuadrilateralElement,
   createElementGeometry,
   FiniteElementSpace,
   LinearTriangularElement,
   mapToPhysicalPoint,
-  physicalGradients,
+  physicalGradientsAt,
+  referenceCentroid,
 } from '../fem/elements.ts'
 import {
+  createStructuredQuadMesh,
   createStructuredTriangularMesh,
   summarizeMesh,
   type Mesh,
@@ -42,7 +45,7 @@ import type {
   StageRegistry,
   WeakFormStageResult,
 } from '../pipeline/contracts.ts'
-import type { ElementComputationTrace } from '../tracing/traces.ts'
+import type { ElementComputationTrace, QuadratureSampleTrace } from '../tracing/traces.ts'
 
 export class DefaultProblemSetupStage implements IProblemSetupStage {
   readonly id = 'default-problem-setup'
@@ -58,7 +61,9 @@ export class StructuredMeshGenerationStage implements IMeshGenerationStage {
   readonly id = 'structured-mesh-generation'
 
   run({ config }: { config: SimulationConfig }): Mesh {
-    return createStructuredTriangularMesh(config.baseDivisions)
+    return config.elementKind === 'quad'
+      ? createStructuredQuadMesh(config.baseDivisions)
+      : createStructuredTriangularMesh(config.baseDivisions)
   }
 }
 
@@ -67,7 +72,10 @@ export class StructuredUniformRefiner implements IMeshRefiner {
   readonly label = 'Uniform regular refinement'
 
   run({ mesh }: { mesh: Mesh }): Mesh {
-    return createStructuredTriangularMesh(mesh.divisions * 2)
+    const doubled = mesh.divisions * 2
+    return mesh.elementKind === 'quad'
+      ? createStructuredQuadMesh(doubled)
+      : createStructuredTriangularMesh(doubled)
   }
 }
 
@@ -105,8 +113,12 @@ export class FiniteElementSpaceStage implements IFiniteElementSpaceStage {
   readonly id = 'finite-element-space'
 
   run({ mesh }: { mesh: Mesh }): SpaceStageResult {
+    const finiteElement =
+      mesh.elementKind === 'quad'
+        ? new BilinearQuadrilateralElement()
+        : new LinearTriangularElement()
     return {
-      finiteElement: new LinearTriangularElement(),
+      finiteElement,
       space: new FiniteElementSpace(mesh),
     }
   }
@@ -151,21 +163,30 @@ export class AssemblyStage implements IAssemblyStage {
     const sparseMatrix = new SparseMatrix(space.dofCount)
     const rhs = Array.from({ length: space.dofCount }, () => 0)
     const traceCollector = new SelectedElementTraceCollector(config.selectedElementId)
+    const centroid = referenceCentroid(finiteElement.kind)
 
     for (const element of mesh.elements) {
       const geometry = createElementGeometry(mesh, element)
-      const gradients = physicalGradients(finiteElement, geometry)
       const localMatrix = Array.from({ length: finiteElement.localDofCount }, () =>
         Array.from({ length: finiteElement.localDofCount }, () => 0),
       )
       const localLoad = Array.from({ length: finiteElement.localDofCount }, () => 0)
-      const quadratureSamples = []
+      const quadratureSamples: QuadratureSampleTrace[] = []
+      let elementArea = 0
 
       for (const sample of quadratureRule.points()) {
-        const physicalPoint = mapToPhysicalPoint(geometry, sample.point)
+        const { gradients, jacobianInfo } = physicalGradientsAt(
+          finiteElement,
+          geometry,
+          sample.point,
+        )
+        const physicalPoint = mapToPhysicalPoint(finiteElement, geometry, sample.point)
         const shapeValues = finiteElement.shapeFunctions(sample.point)
-        const integrationWeight = Math.abs(geometry.determinant) * sample.weight
+        const absDet = Math.abs(jacobianInfo.determinant)
+        const integrationWeight = absDet * sample.weight
         const sourceValue = problem.source(physicalPoint)
+
+        elementArea += integrationWeight
 
         quadratureSamples.push({
           referencePoint: sample.point,
@@ -173,6 +194,10 @@ export class AssemblyStage implements IAssemblyStage {
           weight: sample.weight,
           shapeValues,
           sourceValue,
+          jacobian: jacobianInfo.jacobian,
+          determinant: jacobianInfo.determinant,
+          inverseTranspose: jacobianInfo.inverseTranspose,
+          physicalGradients: gradients,
         })
 
         for (let i = 0; i < finiteElement.localDofCount; i += 1) {
@@ -200,14 +225,16 @@ export class AssemblyStage implements IAssemblyStage {
         }
       }
 
+      const centroidInfo = physicalGradientsAt(finiteElement, geometry, centroid)
       const trace: ElementComputationTrace = {
         elementId: element.id,
-        nodeIds: element.nodeIds,
+        nodeIds: [...element.nodeIds],
+        elementKind: finiteElement.kind,
         quadratureKind: quadratureRule.id,
-        jacobian: geometry.jacobian,
-        determinant: geometry.determinant,
-        area: geometry.area,
-        physicalGradients: gradients,
+        jacobian: centroidInfo.jacobianInfo.jacobian,
+        determinant: centroidInfo.jacobianInfo.determinant,
+        area: elementArea,
+        physicalGradients: centroidInfo.gradients,
         quadratureSamples,
         localStiffness: localMatrix,
         localLoad,

@@ -1,4 +1,8 @@
-import { createElementGeometry, physicalGradients } from '../fem/elements.ts'
+import {
+  createElementGeometry,
+  physicalGradientsAt,
+  referenceCentroid,
+} from '../fem/elements.ts'
 import { averagePoint, type Mesh, type Vector2 } from '../fem/mesh.ts'
 import type { IFiniteElement } from '../fem/elements.ts'
 
@@ -24,9 +28,11 @@ export interface IPostprocessor {
 
 export class DefaultPostprocessor implements IPostprocessor {
   summarize(mesh: Mesh, finiteElement: IFiniteElement, solution: number[]): SolutionSummary {
+    const refCentroid = referenceCentroid(finiteElement.kind)
+
     const elementSamples = mesh.elements.map((element) => {
       const geometry = createElementGeometry(mesh, element)
-      const gradients = physicalGradients(finiteElement, geometry)
+      const { gradients } = physicalGradientsAt(finiteElement, geometry, refCentroid)
       const localValues = element.nodeIds.map((id) => solution[id])
       const gradient = gradients.reduce(
         (acc, grad, index) => ({

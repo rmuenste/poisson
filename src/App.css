@@ -179,13 +179,13 @@
   fill: rgba(248, 240, 229, 0.78);
 }
 
-.triangle {
+.mesh-element {
   fill: rgba(213, 190, 161, 0.34);
   stroke: rgba(68, 72, 84, 0.34);
   stroke-width: 1;
 }
 
-.triangle.selected {
+.mesh-element.selected {
   fill: rgba(216, 110, 59, 0.38);
   stroke: rgba(119, 46, 14, 0.92);
   stroke-width: 2.2;
@@ -221,6 +221,7 @@
 
 .basis-gallery {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -248,7 +249,7 @@
 
 .plotly-surface {
   width: 100%;
-  min-height: 260px;
+  min-height: 240px;
   border-radius: 18px;
   overflow: hidden;
   background: rgba(255, 248, 239, 0.82);
@@ -273,6 +274,54 @@
   border-radius: 14px;
   background: rgba(246, 236, 222, 0.9);
   overflow-x: auto;
+}
+
+.quadrature-point {
+  fill: rgba(47, 143, 131, 0.92);
+}
+
+.quadrature-point-label {
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  fill: var(--text-main);
+  font-weight: 600;
+}
+
+.quad-legend {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+}
+
+.quad-legend-row {
+  display: grid;
+  grid-template-columns: 12px 28px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.quad-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(47, 143, 131, 0.88);
+}
+
+.quad-legend-sum {
+  border-top: 1px solid rgba(165, 101, 61, 0.15);
+  padding-top: 5px;
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+.quadrature-sum-row {
+  border-top: 1px solid rgba(165, 101, 61, 0.15);
+  padding-top: 4px;
+  color: var(--accent-deep);
+  font-weight: 600;
 }
 
 .quadrature-table,
@@ -385,6 +434,41 @@
   text-align: center;
 }
 
+.load-table {
+  display: grid;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  margin-top: 10px;
+}
+
+.load-table-row {
+  display: grid;
+  grid-template-columns: minmax(52px, auto) repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: baseline;
+}
+
+.load-table-header {
+  color: var(--text-muted);
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(165, 101, 61, 0.15);
+}
+
+.load-table-sum-row {
+  border-top: 1px solid rgba(165, 101, 61, 0.15);
+  padding-top: 5px;
+  color: var(--text-muted);
+}
+
+.load-table-result-row {
+  font-weight: 600;
+}
+
+.load-entry-highlight {
+  color: var(--accent-deep);
+}
+
 .sparsity-svg circle {
   fill: rgba(185, 82, 41, 0.85);
 }
@@ -398,7 +482,8 @@
   .layout,
   .summary-grid,
   .table-grid,
-  .note-grid {
+  .note-grid,
+  .basis-gallery {
     grid-template-columns: 1fr;
   }
 }

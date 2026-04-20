@@ -1,5 +1,5 @@
 import type { QuadratureKind } from '../quadrature/quadrature.ts'
-import type { Vector2 } from '../fem/mesh.ts'
+import type { ElementKind, Vector2 } from '../fem/mesh.ts'
 
 export type QuadratureSampleTrace = {
   referencePoint: Vector2
@@ -7,11 +7,16 @@ export type QuadratureSampleTrace = {
   weight: number
   shapeValues: number[]
   sourceValue: number
+  jacobian: [[number, number], [number, number]]
+  determinant: number
+  inverseTranspose: [[number, number], [number, number]]
+  physicalGradients: Vector2[]
 }
 
 export type ElementComputationTrace = {
   elementId: number
-  nodeIds: [number, number, number]
+  nodeIds: number[]
+  elementKind: ElementKind
   quadratureKind: QuadratureKind
   jacobian: [[number, number], [number, number]]
   determinant: number

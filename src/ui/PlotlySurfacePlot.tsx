@@ -6,6 +6,7 @@ type PlotlySurfacePlotProps = {
   color: string
   evaluate: (x: number, y: number) => number
   label: string
+  domain?: 'triangle' | 'square'
 }
 
 type Mesh3DTrace = {
@@ -58,11 +59,15 @@ type Scatter3DTrace = {
 }
 
 type AxisSpec = {
-  title: { text: string }
+  title: { text: string; font: { size: number } }
   range: [number, number]
   backgroundcolor: string
   gridcolor: string
   zerolinecolor: string
+  tickfont: { size: number }
+  nticks: number
+  showspikes: boolean
+  tickformat: string
 }
 
 type PlotlyHTMLElement = HTMLDivElement & {
@@ -74,6 +79,7 @@ export function PlotlySurfacePlot({
   color,
   evaluate,
   label,
+  domain = 'triangle',
 }: PlotlySurfacePlotProps) {
   const containerRef = React.useRef<HTMLDivElement | null>(null)
 
@@ -83,20 +89,21 @@ export function PlotlySurfacePlot({
       return
     }
 
-    const trace = buildSurfaceTrace(color, evaluate)
-    const vertexTrace = buildVertexTrace(color, evaluate)
+    const trace = buildSurfaceTrace(color, evaluate, domain)
+    const vertexTrace = buildVertexTrace(color, evaluate, domain)
     const layout: Partial<Layout> = {
       paper_bgcolor: 'rgba(255,248,239,0)',
       plot_bgcolor: 'rgba(255,248,239,0)',
-      margin: { l: 0, r: 0, t: 28, b: 0 },
+      margin: { l: 0, r: 0, t: 20, b: 0 },
       scene: {
-        aspectmode: 'cube',
+        aspectmode: 'manual',
+        aspectratio: { x: 1, y: 1, z: 0.6 },
         camera: {
-          eye: { x: 1.48, y: -1.6, z: 1.1 },
+          eye: { x: 1.55, y: -1.45, z: 1.3 },
         },
         xaxis: axis('ξ'),
         yaxis: axis('η'),
-        zaxis: axis('value'),
+        zaxis: axis('φ'),
       },
       showlegend: false,
       uirevision: `${label}-surface`,
@@ -116,7 +123,7 @@ export function PlotlySurfacePlot({
     return () => {
       void Plotly.purge(container as PlotlyHTMLElement)
     }
-  }, [color, evaluate, label])
+  }, [color, evaluate, label, domain])
 
   return <div ref={containerRef} className="plotly-surface" aria-label={`${label} surface plot`} />
 }
@@ -124,6 +131,7 @@ export function PlotlySurfacePlot({
 function buildSurfaceTrace(
   color: string,
   evaluate: (x: number, y: number) => number,
+  domain: 'triangle' | 'square',
 ): Mesh3DTrace {
   const resolution = 16
   const x: number[] = []
@@ -138,7 +146,8 @@ function buildSurfaceTrace(
 
   for (let row = 0; row <= resolution; row += 1) {
     indexGrid[row] = []
-    for (let column = 0; column <= resolution - row; column += 1) {
+    const maxColumn = domain === 'square' ? resolution : resolution - row
+    for (let column = 0; column <= maxColumn; column += 1) {
       const xi = column / resolution
       const eta = row / resolution
       const value = evaluate(xi, eta)
@@ -152,7 +161,8 @@ function buildSurfaceTrace(
   }
 
   for (let row = 0; row < resolution; row += 1) {
-    for (let column = 0; column < resolution - row; column += 1) {
+    const columnLimit = domain === 'square' ? resolution : resolution - row
+    for (let column = 0; column < columnLimit; column += 1) {
       const a = indexGrid[row][column]
       const b = indexGrid[row][column + 1]
       const c = indexGrid[row + 1][column]
@@ -160,7 +170,9 @@ function buildSurfaceTrace(
       j.push(b)
       k.push(c)
 
-      if (column < resolution - row - 1) {
+      const includeSecondTriangle =
+        domain === 'square' ? true : column < resolution - row - 1
+      if (includeSecondTriangle) {
         const d = indexGrid[row + 1][column + 1]
         i.push(b)
         j.push(d)
@@ -212,12 +224,25 @@ function buildSurfaceTrace(
 function buildVertexTrace(
   color: string,
   evaluate: (x: number, y: number) => number,
+  domain: 'triangle' | 'square',
 ): Scatter3DTrace {
-  const vertices: Array<[number, number]> = [
-    [0, 0],
-    [1, 0],
-    [0, 1],
-  ]
+  const vertices: Array<[number, number]> =
+    domain === 'square'
+      ? [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+          [0, 1],
+        ]
+      : [
+          [0, 0],
+          [1, 0],
+          [0, 1],
+        ]
+  const labels =
+    domain === 'square'
+      ? ['(0,0)', '(1,0)', '(1,1)', '(0,1)']
+      : ['(0,0)', '(1,0)', '(0,1)']
 
   return {
     type: 'scatter3d',
@@ -225,7 +250,7 @@ function buildVertexTrace(
     x: vertices.map(([x]) => x),
     y: vertices.map(([, y]) => y),
     z: vertices.map(([x, y]) => evaluate(x, y)),
-    text: ['(0,0)', '(1,0)', '(0,1)'],
+    text: labels,
     textposition: 'top center',
     marker: {
       size: 4,
@@ -237,11 +262,15 @@ function buildVertexTrace(
 
 function axis(title: string): AxisSpec {
   return {
-    title: { text: title },
-    range: [0, 1.02],
-    backgroundcolor: 'rgba(244, 235, 221, 0.95)',
-    gridcolor: 'rgba(70, 70, 80, 0.14)',
-    zerolinecolor: 'rgba(70, 70, 80, 0.18)',
+    title: { text: title, font: { size: 11 } },
+    range: [0, 1.05],
+    backgroundcolor: 'rgba(244, 235, 221, 0.38)',
+    gridcolor: 'rgba(70, 70, 80, 0.09)',
+    zerolinecolor: 'rgba(70, 70, 80, 0.14)',
+    tickfont: { size: 9 },
+    nticks: 4,
+    showspikes: false,
+    tickformat: '.1f',
   }
 }
 
