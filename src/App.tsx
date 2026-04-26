@@ -425,8 +425,14 @@ function SpaceStageView({
   const basisFormulaLines =
     elementKind === 'quad'
       ? [
-          'N₁ = (1-ξ)(1-η), N₂ = ξ(1-η), N₃ = ξη, N₄ = (1-ξ)η',
-          '∇N₁ = (-(1-η),-(1-ξ)), ∇N₂ = ((1-η),-ξ), ∇N₃ = (η,ξ), ∇N₄ = (-η,(1-ξ))',
+          'N₁ = (1-ξ)(1-η)',
+          'N₂ = ξ(1-η)',
+          'N₃ = ξη',
+          'N₄ = (1-ξ)η',
+          '∇N₁ = (-(1-η), -(1-ξ))',
+          '∇N₂ = (1-η, -ξ)',
+          '∇N₃ = (η, ξ)',
+          '∇N₄ = (-η, 1-ξ)',
         ]
       : [
           'φ₁ = 1 - ξ - η, φ₂ = ξ, φ₃ = η',
@@ -473,6 +479,33 @@ function SpaceStageView({
           </p>
         </article>
       </div>
+      <article>
+        <h3>Element map F: {elementKind === 'quad' ? 'Q̂' : 'T̂'} → K</h3>
+        <p className="small-note">
+          F maps each reference coordinate (ξ,η) ∈{' '}
+          {elementKind === 'quad' ? 'Q̂ = [0,1]²' : 'T̂'}
+          {' '}to a physical coordinate (x,y) inside element K.
+          Color-matched vertices show the correspondence between reference corners and physical nodes.
+          {elementKind === 'quad'
+            ? ' The bilinear map F(ξ,η) = Σᵢ Nᵢ(ξ,η)·xᵢ interpolates the four node positions.'
+            : ' The affine map F(ξ,η) = x₁ + J·(ξ,η)ᵀ is fully determined by the three vertex positions.'}
+        </p>
+        <RefToPhysMappingSvg
+          elementKind={elementKind}
+          mesh={mesh}
+          selectedElementId={selectedElementId}
+        />
+        <p className="small-note" style={{ marginTop: '10px' }}>
+          {elementKind === 'quad'
+            ? 'The Jacobian J = ∂F/∂(ξ,η) varies with position:'
+            : 'The Jacobian J = ∂F/∂(ξ,η) is constant over the element:'}
+        </p>
+        <p className="math-block" style={{ whiteSpace: 'pre' }}>
+          {elementKind === 'quad'
+            ? 'J(ξ,η) = [ Σᵢ xᵢ ∂Nᵢ/∂ξ   Σᵢ xᵢ ∂Nᵢ/∂η ]\n         [ Σᵢ yᵢ ∂Nᵢ/∂ξ   Σᵢ yᵢ ∂Nᵢ/∂η ]'
+            : 'J = [ x₂-x₁  x₃-x₁ ]\n    [ y₂-y₁  y₃-y₁ ]'}
+        </p>
+      </article>
       <article>
         <h3>Basis functions on the reference element</h3>
         <BasisFunctionGallery elementKind={elementKind} />
@@ -590,14 +623,27 @@ function QuadratureStageView({
             {' '}
             {elementKind === 'quad' ? 'Q̂ = [0,1]²' : 'T̂'}
             {' '}
-            and approximated by a weighted sum of pointwise evaluations:
+            and approximated by a weighted sum. The rule selects a fixed set of
+            quadrature points (ξ_q, η_q) with associated weights w_q. For any
+            integrand g this gives:
           </p>
-          <p className="math-block">∫_T̂ g(ξ,η) dξdη ≈ Σ_q w_q · g(ξ_q, η_q)</p>
+          <p className="math-block">
+            {'∫_'}{elementKind === 'quad' ? 'Q̂' : 'T̂'}{' g(ξ,η) dξdη ≈ Σ_q w_q · g(ξ_q, η_q)'}
+          </p>
           <p className="small-note">
-            This is applied to both quantities assembled per element:
+            Applied to both element integrals — where f denotes the source term and
+            J the element Jacobian:
           </p>
-          <p className="math-block">K_T[i,j] ≈ Σ_q w_q · (∇φ̂ᵢ · ∇φ̂ⱼ) · |det J|</p>
-          <p className="math-block">b_T[i]   ≈ Σ_q w_q · f(x_q) · φ̂ᵢ(ξ_q) · |det J|</p>
+          <p className="math-block">
+            {elementKind === 'quad' ? 'K_E' : 'K_T'}{'[i,j] ≈'}
+            {elementKind === 'quad' && <br />}
+            {'  Σ_q w_q · (∇φ̂ᵢ · ∇φ̂ⱼ) · |det J|'}
+          </p>
+          <p className="math-block">
+            {elementKind === 'quad' ? 'b_E' : 'b_T'}{'[i] ≈'}
+            {elementKind === 'quad' && <br />}
+            {'  Σ_q w_q · f(x_q) · φ̂ᵢ(ξ_q) · |det J|'}
+          </p>
           <p className="small-note">{quadratureExplanation}</p>
         </article>
 
@@ -626,9 +672,10 @@ function QuadratureStageView({
       <article>
         <h3>Sample data — selected element</h3>
         <p className="small-note">
-          Each physical point x_q = F(ξ_q, η_q) = x₁ + J · ξ_q is the image of the reference
-          quadrature point under the element map. Shape values φ̂ᵢ(ξ_q) are evaluated at the
-          reference coordinates and reused for both K_T and b_T.
+          Each physical point x_q = F(ξ_q, η_q) is the image of the reference quadrature point
+          under the element map. Shape values φ̂ᵢ(ξ_q) are evaluated at the reference coordinates
+          and reused for both{' '}
+          {elementKind === 'quad' ? 'K_E and b_E' : 'K_T and b_T'}.
         </p>
         <div className="quadrature-table">
           <div className="row header">
@@ -1237,6 +1284,128 @@ function QuadFormulaMatrix({ trace }: { trace: AssemblyElementTrace }) {
       ))}
       {n === 0 ? <p className="small-note">(empty)</p> : null}
     </div>
+  )
+}
+
+const NODE_COLORS: Record<ElementKind, string[]> = {
+  quad: ['#cf5a36', '#d8a137', '#2f8f83', '#4a6fa5'],
+  triangle: ['#cf5a36', '#d8a137', '#2f8f83'],
+}
+
+function RefToPhysMappingSvg({
+  elementKind,
+  mesh,
+  selectedElementId,
+}: {
+  elementKind: ElementKind
+  mesh: Mesh
+  selectedElementId: number
+}) {
+  const element = mesh.elements[selectedElementId]
+  const colors = NODE_COLORS[elementKind]
+
+  const refCorners =
+    elementKind === 'quad'
+      ? [
+          { xi: 0, eta: 0, label: 'N₁' },
+          { xi: 1, eta: 0, label: 'N₂' },
+          { xi: 1, eta: 1, label: 'N₃' },
+          { xi: 0, eta: 1, label: 'N₄' },
+        ]
+      : [
+          { xi: 0, eta: 0, label: 'φ₁' },
+          { xi: 1, eta: 0, label: 'φ₂' },
+          { xi: 0, eta: 1, label: 'φ₃' },
+        ]
+
+  const W = 560, H = 252
+  const OX = 28, OY = 216, S = 174  // ref-panel origin and scale
+  const RX = 300                     // right-panel x offset
+
+  const toRef = (xi: number, eta: number) => ({ x: OX + xi * S, y: OY - eta * S })
+  const toPhys = (px: number, py: number) => ({ x: RX + OX + px * S, y: OY - py * S })
+
+  const refPts = refCorners.map(c => toRef(c.xi, c.eta))
+  const physNodePts = element.nodeIds.map(id => mesh.nodes[id].point)
+  const physPts = physNodePts.map(p => toPhys(p.x, p.y))
+
+  const refPolygon = refPts.map(p => `${p.x},${p.y}`).join(' ')
+  const physPolygon = physPts.map(p => `${p.x},${p.y}`).join(' ')
+
+  const domainLabel = elementKind === 'quad' ? 'Q̂' : 'T̂'
+
+  // Centroid of each shape in SVG coords, for fill labels
+  const refFillX = elementKind === 'quad' ? OX + S / 2 : OX + S / 3
+  const refFillY = elementKind === 'quad' ? OY - S / 2 : OY - S / 3
+  const physCx = physNodePts.reduce((s, p) => s + p.x, 0) / physNodePts.length
+  const physCy = physNodePts.reduce((s, p) => s + p.y, 0) / physNodePts.length
+  const physFill = toPhys(physCx, physCy)
+
+  // Push node labels away from the shape center
+  const labelOff = (svgPt: Vector2, centerX: number, centerY: number) => ({
+    dx: svgPt.x < centerX ? -34 : 8,
+    dy: svgPt.y > centerY ? 15 : -6,
+  })
+
+  const ax1 = OX + S + 20
+  const ax2 = RX + OX - 16
+  const arrowY = H / 2 - 8
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="reference-svg">
+      <rect x="0" y="0" width={W} height={H} rx="22" />
+      <defs>
+        <marker id="map-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="rgba(31,36,48,0.5)" />
+        </marker>
+      </defs>
+
+      {/* Reference element */}
+      <polygon points={refPolygon} className="reference-triangle-shape" />
+      <line x1={OX} y1={OY} x2={OX + S + 12} y2={OY} className="reference-axis" />
+      <line x1={OX} y1={OY} x2={OX} y2={OY - S - 12} className="reference-axis" />
+      <text x={OX + S + 16} y={OY + 5} className="reference-axis-label">ξ</text>
+      <text x={OX - 16} y={OY - S - 8} className="reference-axis-label">η</text>
+      <text x={refFillX - 6} y={refFillY + 6} className="reference-fill-label">{domainLabel}</text>
+      {refPts.map((pt, i) => {
+        const { dx, dy } = labelOff(pt, refFillX, refFillY)
+        return (
+          <g key={i}>
+            <circle cx={pt.x} cy={pt.y} r="6" fill={colors[i]} />
+            <text x={pt.x + dx} y={pt.y + dy} className="reference-node-label">
+              {refCorners[i].label}
+            </text>
+          </g>
+        )
+      })}
+
+      {/* Arrow */}
+      <line
+        x1={ax1} y1={arrowY} x2={ax2} y2={arrowY}
+        stroke="rgba(31,36,48,0.5)" strokeWidth="2"
+        markerEnd="url(#map-arrow)"
+      />
+      <text x={(ax1 + ax2) / 2} y={arrowY - 9} textAnchor="middle" className="reference-fill-label">F</text>
+
+      {/* Physical element */}
+      <polygon points={physPolygon} className="reference-triangle-shape" />
+      <line x1={RX + OX} y1={OY} x2={RX + OX + S + 12} y2={OY} className="reference-axis" />
+      <line x1={RX + OX} y1={OY} x2={RX + OX} y2={OY - S - 12} className="reference-axis" />
+      <text x={RX + OX + S + 16} y={OY + 5} className="reference-axis-label">x</text>
+      <text x={RX + OX - 14} y={OY - S - 8} className="reference-axis-label">y</text>
+      <text x={physFill.x - 6} y={physFill.y + 6} className="reference-fill-label">K</text>
+      {physPts.map((pt, i) => {
+        const { dx, dy } = labelOff(pt, physFill.x, physFill.y)
+        return (
+          <g key={i}>
+            <circle cx={pt.x} cy={pt.y} r="6" fill={colors[i]} />
+            <text x={pt.x + dx} y={pt.y + dy} className="reference-node-label">
+              x{['₁', '₂', '₃', '₄'][i]}
+            </text>
+          </g>
+        )
+      })}
+    </svg>
   )
 }
 
