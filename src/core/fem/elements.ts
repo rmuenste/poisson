@@ -62,8 +62,102 @@ export class BilinearQuadrilateralElement implements IFiniteElement {
   }
 }
 
+export class BiquadraticQuadrilateralElement implements IFiniteElement {
+  readonly id = 'q2-quad'
+  readonly kind = 'quad-q2' as const
+  readonly order = 2
+  readonly localDofCount = 9
+
+  shapeFunctions(referencePoint: Vector2): number[] {
+    const { x, y } = referencePoint
+    const lx = lagrange1D(x)
+    const ly = lagrange1D(y)
+    return [
+      lx[0] * ly[0],
+      lx[2] * ly[0],
+      lx[2] * ly[2],
+      lx[0] * ly[2],
+      lx[1] * ly[0],
+      lx[2] * ly[1],
+      lx[1] * ly[2],
+      lx[0] * ly[1],
+      lx[1] * ly[1],
+    ]
+  }
+
+  referenceGradients(referencePoint: Vector2): Vector2[] {
+    const { x, y } = referencePoint
+    const lx = lagrange1D(x)
+    const ly = lagrange1D(y)
+    const dlx = lagrange1DDerivative(x)
+    const dly = lagrange1DDerivative(y)
+    const make = (a: number, b: number): Vector2 => ({
+      x: dlx[a] * ly[b],
+      y: lx[a] * dly[b],
+    })
+    return [
+      make(0, 0),
+      make(2, 0),
+      make(2, 2),
+      make(0, 2),
+      make(1, 0),
+      make(2, 1),
+      make(1, 2),
+      make(0, 1),
+      make(1, 1),
+    ]
+  }
+}
+
+function lagrange1D(t: number): [number, number, number] {
+  return [(1 - t) * (1 - 2 * t), 4 * t * (1 - t), t * (2 * t - 1)]
+}
+
+function lagrange1DDerivative(t: number): [number, number, number] {
+  return [4 * t - 3, 4 - 8 * t, 4 * t - 1]
+}
+
+export class QuadraticTriangularElement implements IFiniteElement {
+  readonly id = 'p2-triangle'
+  readonly kind = 'triangle-p2' as const
+  readonly order = 2
+  readonly localDofCount = 6
+
+  shapeFunctions(referencePoint: Vector2): number[] {
+    const { x, y } = referencePoint
+    const l1 = 1 - x - y
+    const l2 = x
+    const l3 = y
+    return [
+      l1 * (2 * l1 - 1),
+      l2 * (2 * l2 - 1),
+      l3 * (2 * l3 - 1),
+      4 * l2 * l3,
+      4 * l1 * l3,
+      4 * l1 * l2,
+    ]
+  }
+
+  referenceGradients(referencePoint: Vector2): Vector2[] {
+    const { x, y } = referencePoint
+    const l1 = 1 - x - y
+    const l2 = x
+    const l3 = y
+    return [
+      { x: -(4 * l1 - 1), y: -(4 * l1 - 1) },
+      { x: 4 * l2 - 1, y: 0 },
+      { x: 0, y: 4 * l3 - 1 },
+      { x: 4 * l3, y: 4 * l2 },
+      { x: -4 * l3, y: 4 * (l1 - l3) },
+      { x: 4 * (l1 - l2), y: -4 * l2 },
+    ]
+  }
+}
+
 export function referenceCentroid(kind: ElementKind): Vector2 {
-  return kind === 'quad' ? { x: 0.5, y: 0.5 } : { x: 1 / 3, y: 1 / 3 }
+  return kind === 'quad' || kind === 'quad-q2'
+    ? { x: 0.5, y: 0.5 }
+    : { x: 1 / 3, y: 1 / 3 }
 }
 
 export interface IFiniteElementSpace {

@@ -7,17 +7,22 @@ import {
 import { UnitSquarePoissonProblem } from '../domain/problem.ts'
 import {
   BilinearQuadrilateralElement,
+  BiquadraticQuadrilateralElement,
   createElementGeometry,
   FiniteElementSpace,
   LinearTriangularElement,
+  QuadraticTriangularElement,
   mapToPhysicalPoint,
   physicalGradientsAt,
   referenceCentroid,
 } from '../fem/elements.ts'
 import {
+  createStructuredP2TriangularMesh,
+  createStructuredQ2QuadMesh,
   createStructuredQuadMesh,
   createStructuredTriangularMesh,
   summarizeMesh,
+  type ElementKind,
   type Mesh,
   type MeshSummary,
 } from '../fem/mesh.ts'
@@ -57,13 +62,24 @@ export class DefaultProblemSetupStage implements IProblemSetupStage {
   }
 }
 
+function buildMeshForKind(kind: ElementKind, divisions: number): Mesh {
+  switch (kind) {
+    case 'quad':
+      return createStructuredQuadMesh(divisions)
+    case 'triangle':
+      return createStructuredTriangularMesh(divisions)
+    case 'quad-q2':
+      return createStructuredQ2QuadMesh(divisions)
+    case 'triangle-p2':
+      return createStructuredP2TriangularMesh(divisions)
+  }
+}
+
 export class StructuredMeshGenerationStage implements IMeshGenerationStage {
   readonly id = 'structured-mesh-generation'
 
   run({ config }: { config: SimulationConfig }): Mesh {
-    return config.elementKind === 'quad'
-      ? createStructuredQuadMesh(config.baseDivisions)
-      : createStructuredTriangularMesh(config.baseDivisions)
+    return buildMeshForKind(config.elementKind, config.baseDivisions)
   }
 }
 
@@ -72,10 +88,7 @@ export class StructuredUniformRefiner implements IMeshRefiner {
   readonly label = 'Uniform regular refinement'
 
   run({ mesh }: { mesh: Mesh }): Mesh {
-    const doubled = mesh.divisions * 2
-    return mesh.elementKind === 'quad'
-      ? createStructuredQuadMesh(doubled)
-      : createStructuredTriangularMesh(doubled)
+    return buildMeshForKind(mesh.elementKind, mesh.divisions * 2)
   }
 }
 
@@ -113,10 +126,18 @@ export class FiniteElementSpaceStage implements IFiniteElementSpaceStage {
   readonly id = 'finite-element-space'
 
   run({ mesh }: { mesh: Mesh }): SpaceStageResult {
-    const finiteElement =
-      mesh.elementKind === 'quad'
-        ? new BilinearQuadrilateralElement()
-        : new LinearTriangularElement()
+    const finiteElement = (() => {
+      switch (mesh.elementKind) {
+        case 'quad':
+          return new BilinearQuadrilateralElement()
+        case 'triangle':
+          return new LinearTriangularElement()
+        case 'quad-q2':
+          return new BiquadraticQuadrilateralElement()
+        case 'triangle-p2':
+          return new QuadraticTriangularElement()
+      }
+    })()
     return {
       finiteElement,
       space: new FiniteElementSpace(mesh),

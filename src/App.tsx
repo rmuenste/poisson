@@ -133,6 +133,8 @@ function App() {
                 >
                   <option value="triangle">P1 triangle</option>
                   <option value="quad">Q1 quadrilateral</option>
+                  <option value="triangle-p2">P2 triangle</option>
+                  <option value="quad-q2">Q2 quadrilateral</option>
                 </select>
               }
             />
@@ -374,10 +376,18 @@ function MeshStageView({
   elementKind: ElementKind
 }) {
   const elementsWord = elementLabel(elementKind, true).toLowerCase()
-  const meshDescription =
-    elementKind === 'quad'
-      ? 'Structured square mesh of bilinear quadrilaterals with a dedicated uniform refinement service.'
-      : 'Structured square triangulation with a dedicated uniform refinement service.'
+  const meshDescription = (() => {
+    switch (elementKind) {
+      case 'quad':
+        return 'Structured square mesh of bilinear quadrilaterals with a dedicated uniform refinement service.'
+      case 'quad-q2':
+        return 'Structured square mesh of biquadratic quadrilaterals (9 nodes per element) with a dedicated uniform refinement service.'
+      case 'triangle-p2':
+        return 'Structured square triangulation with quadratic triangles (6 nodes per element) and a dedicated uniform refinement service.'
+      case 'triangle':
+        return 'Structured square triangulation with a dedicated uniform refinement service.'
+    }
+  })()
   return (
     <section className="panel-card stage-view">
       <div className="section-heading">
@@ -418,28 +428,64 @@ function SpaceStageView({
   elementKind: ElementKind
 }) {
   const element = mesh.elements[selectedElementId]
-  const basisHeading =
-    elementKind === 'quad'
-      ? 'Q1 basis on the reference square [0,1]²'
-      : 'P1 basis on the reference triangle'
-  const basisFormulaLines =
-    elementKind === 'quad'
-      ? [
-          'N₁ = (1-ξ)(1-η)',
-          'N₂ = ξ(1-η)',
-          'N₃ = ξη',
-          'N₄ = (1-ξ)η',
-          '∇N₁ = (-(1-η), -(1-ξ))',
-          '∇N₂ = (1-η, -ξ)',
-          '∇N₃ = (η, ξ)',
-          '∇N₄ = (-η, 1-ξ)',
-        ]
-      : [
-          'φ₁ = 1 - ξ - η, φ₂ = ξ, φ₃ = η',
-          '∇φ₁ = (-1,-1), ∇φ₂ = (1,0), ∇φ₃ = (0,1)',
-        ]
-  const domainLabel =
-    elementKind === 'quad' ? 'Reference square [0,1]²' : 'Reference triangle'
+  const basisHeading = (() => {
+    switch (elementKind) {
+      case 'quad':
+        return 'Q1 basis on the reference square [0,1]²'
+      case 'quad-q2':
+        return 'Q2 basis on the reference square [0,1]²'
+      case 'triangle-p2':
+        return 'P2 basis on the reference triangle'
+      case 'triangle':
+        return 'P1 basis on the reference triangle'
+    }
+  })()
+  const basisFormulas = (() => {
+    switch (elementKind) {
+      case 'quad':
+        return {
+          shapes: ['N₁ = (1-ξ)(1-η)', 'N₂ = ξ(1-η)', 'N₃ = ξη', 'N₄ = (1-ξ)η'],
+          gradients: [
+            '∇N₁ = (-(1-η), -(1-ξ))',
+            '∇N₂ = (1-η, -ξ)',
+            '∇N₃ = (η, ξ)',
+            '∇N₄ = (-η, 1-ξ)',
+          ],
+        }
+      case 'quad-q2':
+        return {
+          shapes: [
+            'Lₐ(t) = (1-t)(1-2t),  L_b(t) = 4t(1-t),  L_c(t) = t(2t-1)',
+            'Nᵢ(ξ,η) = L_{aᵢ}(ξ) · L_{bᵢ}(η)',
+            'where (aᵢ, bᵢ) ∈ {a,b,c}² selects one of the 9 nodes',
+          ],
+          gradients: [
+            "∂Nᵢ/∂ξ = L'_{aᵢ}(ξ) · L_{bᵢ}(η)",
+            "∂Nᵢ/∂η = L_{aᵢ}(ξ) · L'_{bᵢ}(η)",
+          ],
+        }
+      case 'triangle-p2':
+        return {
+          shapes: [
+            'λ₁ = 1 - ξ - η,  λ₂ = ξ,  λ₃ = η',
+            'φᵢ = λᵢ (2λᵢ - 1)        (vertex i = 1..3)',
+            'φᵢ = 4 λⱼ λₖ              (edge midpoint opposite vertex i)',
+          ],
+          gradients: [
+            '∇(λ_i (2λ_i - 1)) = (4λ_i - 1) ∇λ_i',
+            '∇(4 λ_j λ_k) = 4 (λ_k ∇λ_j + λ_j ∇λ_k)',
+          ],
+        }
+      case 'triangle':
+        return {
+          shapes: ['φ₁ = 1 - ξ - η', 'φ₂ = ξ', 'φ₃ = η'],
+          gradients: ['∇φ₁ = (-1, -1)', '∇φ₂ = (1, 0)', '∇φ₃ = (0, 1)'],
+        }
+    }
+  })()
+  const domainLabel = isQuadKind(elementKind)
+    ? 'Reference square [0,1]²'
+    : 'Reference triangle'
   const dofCountText = element.nodeIds.length
 
   return (
@@ -448,7 +494,11 @@ function SpaceStageView({
       <div className="note-grid">
         <article>
           <h3>{basisHeading}</h3>
-          {basisFormulaLines.map((line) => (
+          {basisFormulas.shapes.map((line: string) => (
+            <p key={line} className="math-block">{line}</p>
+          ))}
+          <p className="small-note">Gradients:</p>
+          {basisFormulas.gradients.map((line: string) => (
             <p key={line} className="math-block">{line}</p>
           ))}
         </article>
@@ -465,7 +515,7 @@ function SpaceStageView({
       <div className="note-grid">
         <article>
           <h3>{domainLabel}</h3>
-          {elementKind === 'quad' ? <ReferenceSquareSvg /> : <ReferenceTriangleSvg />}
+          {isQuadKind(elementKind) ? <ReferenceSquareSvg /> : <ReferenceTriangleSvg />}
         </article>
         <article>
           <h3>Selected element DOF map</h3>
@@ -480,15 +530,17 @@ function SpaceStageView({
         </article>
       </div>
       <article>
-        <h3>Element map F: {elementKind === 'quad' ? 'Q̂' : 'T̂'} → K</h3>
+        <h3>Element map F: {isQuadKind(elementKind) ? 'Q̂' : 'T̂'} → K</h3>
         <p className="small-note">
           F maps each reference coordinate (ξ,η) ∈{' '}
-          {elementKind === 'quad' ? 'Q̂ = [0,1]²' : 'T̂'}
+          {isQuadKind(elementKind) ? 'Q̂ = [0,1]²' : 'T̂'}
           {' '}to a physical coordinate (x,y) inside element K.
           Color-matched vertices show the correspondence between reference corners and physical nodes.
-          {elementKind === 'quad'
-            ? ' The bilinear map F(ξ,η) = Σᵢ Nᵢ(ξ,η)·xᵢ interpolates the four node positions.'
-            : ' The affine map F(ξ,η) = x₁ + J·(ξ,η)ᵀ is fully determined by the three vertex positions.'}
+          {isHigherOrder(elementKind)
+            ? ' For a structured mesh the map is still linear (or bilinear) in geometry, but the basis functions are quadratic so the solution interpolant is curved within each element.'
+            : isQuadKind(elementKind)
+              ? ' The bilinear map F(ξ,η) = Σᵢ Nᵢ(ξ,η)·xᵢ interpolates the four node positions.'
+              : ' The affine map F(ξ,η) = x₁ + J·(ξ,η)ᵀ is fully determined by the three vertex positions.'}
         </p>
         <RefToPhysMappingSvg
           elementKind={elementKind}
@@ -496,12 +548,12 @@ function SpaceStageView({
           selectedElementId={selectedElementId}
         />
         <p className="small-note" style={{ marginTop: '10px' }}>
-          {elementKind === 'quad'
+          {isQuadKind(elementKind)
             ? 'The Jacobian J = ∂F/∂(ξ,η) varies with position:'
             : 'The Jacobian J = ∂F/∂(ξ,η) is constant over the element:'}
         </p>
         <p className="math-block" style={{ whiteSpace: 'pre' }}>
-          {elementKind === 'quad'
+          {isQuadKind(elementKind)
             ? 'J(ξ,η) = [ Σᵢ xᵢ ∂Nᵢ/∂ξ   Σᵢ xᵢ ∂Nᵢ/∂η ]\n         [ Σᵢ yᵢ ∂Nᵢ/∂ξ   Σᵢ yᵢ ∂Nᵢ/∂η ]'
             : 'J = [ x₂-x₁  x₃-x₁ ]\n    [ y₂-y₁  y₃-y₁ ]'}
         </p>
@@ -529,10 +581,11 @@ function QuadraturePointsSvg({
     x: 38 + xi * 204,
     y: 242 - eta * 204,
   })
-  const domainPoints =
-    elementKind === 'quad' ? '38,242 242,242 242,38 38,38' : '38,242 242,242 38,38'
-  const domainLabel = elementKind === 'quad' ? 'Q̂' : 'T̂'
-  const labelY = elementKind === 'quad' ? 145 : 168
+  const domainPoints = isQuadKind(elementKind)
+    ? '38,242 242,242 242,38 38,38'
+    : '38,242 242,242 38,38'
+  const domainLabel = isQuadKind(elementKind) ? 'Q̂' : 'T̂'
+  const labelY = isQuadKind(elementKind) ? 145 : 168
 
   return (
     <svg className="reference-svg" viewBox="0 0 280 280">
@@ -584,6 +637,10 @@ function quadratureExplanationFor(kind: QuadratureKind): string {
       return 'The vertex trapezoidal rule on Q̂ places one point at each corner of [0,1]² with equal weight 1/4. It reproduces bilinear integrands exactly per coordinate direction. Because ∇Nᵢ varies linearly on Q̂, stiffness entries are not generally exact — Gauss 2×2 is the usual choice for Q1.'
     case 'quad-gauss2x2':
       return 'The 2×2 Gauss–Legendre rule on [0,1]² places four points at ξ,η ∈ {½ ∓ 1/(2√3)} with equal weight 1/4. It integrates polynomials of degree ≤ 3 per coordinate direction exactly. Because the Q1 stiffness integrand (∇Nᵢ · ∇Nⱼ) |det J| is at most bicubic on affine quads, stiffness is computed exactly.'
+    case 'quad-gauss3x3':
+      return 'The 3×3 Gauss–Legendre rule on [0,1]² places nine points on a tensor grid at the 1D nodes ½ ± ½√(3/5) and ½, with weights 5/18, 5/18, and 4/9. It integrates polynomials of degree ≤ 5 per coordinate direction exactly — sufficient for Q2 stiffness and load on affine-mapped quads.'
+    case 'triangle-gauss3':
+      return 'The 3-point edge-midpoint rule on T̂ places one point at each midpoint (1/6, 1/6), (2/3, 1/6), (1/6, 2/3) with equal weight 1/6. It is exact for polynomials of degree ≤ 2, sufficient for the P2 load vector and (because P2 stiffness integrands are degree ≤ 2 on affine triangles) for the stiffness matrix as well.'
   }
 }
 
@@ -605,8 +662,11 @@ function QuadratureStageView({
   }>
 }) {
   const weightSum = samples.reduce((sum, s) => sum + s.weight, 0)
-  const referenceAreaLabel = elementKind === 'quad' ? 'area(Q̂) = 1' : 'area(T̂) = 1/2'
+  const referenceAreaLabel = isQuadKind(elementKind) ? 'area(Q̂) = 1' : 'area(T̂) = 1/2'
   const quadratureExplanation = quadratureExplanationFor(kind)
+  const domainRef = isQuadKind(elementKind) ? 'Q̂' : 'T̂'
+  const domainSym = isQuadKind(elementKind) ? 'Q' : 'T'
+  const basisSym = isQuadKind(elementKind) ? 'N̂' : 'φ̂'
 
   return (
     <section className="panel-card stage-view">
@@ -621,34 +681,26 @@ function QuadratureStageView({
           <p className="small-note">
             Every integral over an element is pulled back to the reference domain
             {' '}
-            {elementKind === 'quad' ? 'Q̂ = [0,1]²' : 'T̂'}
+            {isQuadKind(elementKind) ? 'Q̂ = [0,1]²' : 'T̂'}
             {' '}
-            and approximated by a weighted sum. The rule selects a fixed set of
-            quadrature points (ξ_q, η_q) with associated weights w_q. For any
-            integrand g this gives:
+            and approximated by a weighted sum of pointwise evaluations.
+            Here q indexes the quadrature points, (ξ_q, η_q) are their reference coordinates,
+            w_q are the associated weights, Σ_q denotes the sum over all points,
+            and g stands for any integrand evaluated at (ξ_q, η_q):
           </p>
-          <p className="math-block">
-            {'∫_'}{elementKind === 'quad' ? 'Q̂' : 'T̂'}{' g(ξ,η) dξdη ≈ Σ_q w_q · g(ξ_q, η_q)'}
-          </p>
+          <p className="math-block">∫_{domainRef} g(ξ,η) dξdη ≈ Σ_q w_q · g(ξ_q, η_q)</p>
           <p className="small-note">
-            Applied to both element integrals — where f denotes the source term and
-            J the element Jacobian:
+            This is applied to both quantities assembled per element.
+            The source term f is the right-hand side of the PDE (here f = 1 everywhere),
+            and J is the Jacobian of the element map F: {domainRef} → physical element:
           </p>
-          <p className="math-block">
-            {elementKind === 'quad' ? 'K_E' : 'K_T'}{'[i,j] ≈'}
-            {elementKind === 'quad' && <br />}
-            {'  Σ_q w_q · (∇φ̂ᵢ · ∇φ̂ⱼ) · |det J|'}
-          </p>
-          <p className="math-block">
-            {elementKind === 'quad' ? 'b_E' : 'b_T'}{'[i] ≈'}
-            {elementKind === 'quad' && <br />}
-            {'  Σ_q w_q · f(x_q) · φ̂ᵢ(ξ_q) · |det J|'}
-          </p>
+          <p className="math-block">K_{domainSym}[i,j] ≈ Σ_q w_q · (∇{basisSym}ᵢ · ∇{basisSym}ⱼ) · |det J|</p>
+          <p className="math-block">b_{domainSym}[i]   ≈ Σ_q w_q · f(x_q) · {basisSym}ᵢ(ξ_q) · |det J|</p>
           <p className="small-note">{quadratureExplanation}</p>
         </article>
 
         <article>
-          <h3>Points on {elementKind === 'quad' ? 'Q̂' : 'T̂'}</h3>
+          <h3>Points on {isQuadKind(elementKind) ? 'Q̂' : 'T̂'}</h3>
           <QuadraturePointsSvg samples={samples} elementKind={elementKind} />
           <div className="quad-legend">
             {samples.map((s, index) => (
@@ -672,17 +724,16 @@ function QuadratureStageView({
       <article>
         <h3>Sample data — selected element</h3>
         <p className="small-note">
-          Each physical point x_q = F(ξ_q, η_q) is the image of the reference quadrature point
-          under the element map. Shape values φ̂ᵢ(ξ_q) are evaluated at the reference coordinates
-          and reused for both{' '}
-          {elementKind === 'quad' ? 'K_E and b_E' : 'K_T and b_T'}.
+          Each physical point x_q = F(ξ_q, η_q) = x₁ + J · ξ_q is the image of the reference
+          quadrature point under the element map. Shape values {basisSym}ᵢ(ξ_q) are evaluated at the
+          reference coordinates and reused for both K_{domainSym} and b_{domainSym}.
         </p>
         <div className="quadrature-table">
           <div className="row header">
             <span>Ref point (ξ,η)</span>
             <span>Physical point x_q</span>
             <span>Weight w_q</span>
-            <span>Shape values φ̂ᵢ(ξ_q)</span>
+            <span>Shape values {basisSym}ᵢ(ξ_q)</span>
             <span>f(x_q)</span>
           </div>
           {samples.map((sample, index) => (
@@ -744,7 +795,19 @@ function AssemblyStageView({
   selectedElementDofs: number[] | undefined
   elementKind: ElementKind
 }) {
-  const dofCount = selectedElementDofs?.length ?? (elementKind === 'quad' ? 4 : 3)
+  const fallbackDofCount = (() => {
+    switch (elementKind) {
+      case 'quad':
+        return 4
+      case 'triangle':
+        return 3
+      case 'quad-q2':
+        return 9
+      case 'triangle-p2':
+        return 6
+    }
+  })()
+  const dofCount = selectedElementDofs?.length ?? fallbackDofCount
   const elementNoun = elementLabel(elementKind, false).toLowerCase()
   return (
     <section className="panel-card stage-view">
@@ -776,21 +839,7 @@ function AssemblyStageView({
         <article>
           <h3>Local contributions</h3>
           {selectedTrace ? (
-            elementKind === 'quad' ? (
-              <>
-                <p className="small-note">
-                  For bilinear quadrilaterals, the reference gradients ∇N̂ᵢ(ξ,η) vary with
-                  position, so each stiffness entry is a quadrature sum, not a closed form.
-                </p>
-                <p className="small-note">
-                  <code>
-                    K_Q[i,j] = Σ_q w_q · |det J(ξ_q)| · (J(ξ_q)^(-T) ∇N̂ᵢ(ξ_q)) · (J(ξ_q)^(-T) ∇N̂ⱼ(ξ_q))
-                  </code>
-                </p>
-                <QuadFormulaMatrix trace={selectedTrace} />
-                <MatrixTable matrix={selectedTrace.localStiffness} />
-              </>
-            ) : (
+            elementKind === 'triangle' ? (
               <>
                 <p className="small-note">
                   For linear triangles, each basis gradient is constant on the element. That
@@ -810,6 +859,21 @@ function AssemblyStageView({
                   then take dot products, then multiply by the element area”.
                 </p>
                 <FormulaMatrix trace={selectedTrace} />
+                <MatrixTable matrix={selectedTrace.localStiffness} />
+              </>
+            ) : (
+              <>
+                <p className="small-note">
+                  {isHigherOrder(elementKind)
+                    ? `For ${elementOrderLabel(elementKind)} elements, the reference gradients ∇φ̂ᵢ(ξ,η) vary across the element, so each stiffness entry is a quadrature sum.`
+                    : 'For bilinear quadrilaterals, the reference gradients ∇N̂ᵢ(ξ,η) vary with position, so each stiffness entry is a quadrature sum, not a closed form.'}
+                </p>
+                <p className="small-note">
+                  <code>
+                    K[i,j] = Σ_q w_q · |det J(ξ_q)| · (J(ξ_q)^(-T) ∇φ̂ᵢ(ξ_q)) · (J(ξ_q)^(-T) ∇φ̂ⱼ(ξ_q))
+                  </code>
+                </p>
+                <QuadFormulaMatrix trace={selectedTrace} />
                 <MatrixTable matrix={selectedTrace.localStiffness} />
               </>
             )
@@ -836,7 +900,7 @@ function AssemblyStageView({
           <article>
             <h3>What lands in the matrix</h3>
             <p className="math-block">
-              A({elementKind === 'quad' ? 'Q' : 'T'})[i,j] = ∫<sub>{elementKind === 'quad' ? 'Q' : 'T'}</sub> ∇φ<sub>i</sub> · ∇φ<sub>j</sub> dx
+              A({isQuadKind(elementKind) ? 'Q' : 'T'})[i,j] = ∫<sub>{isQuadKind(elementKind) ? 'Q' : 'T'}</sub> ∇φ<sub>i</sub> · ∇φ<sub>j</sub> dx
             </p>
             <p className="small-note">
               During assembly, the selected {elementNoun} does not create a separate matrix block.
@@ -941,9 +1005,9 @@ function PostprocessStageView({
 }) {
   const elementNoun = elementLabel(mesh.elementKind, false).toLowerCase()
   const gradientNote =
-    mesh.elementKind === 'quad'
-      ? 'Gradient samples shown below are evaluated at the reference centroid of each element.'
-      : 'Gradient samples are constant on each linear element and available for inspection.'
+    mesh.elementKind === 'triangle'
+      ? 'Gradient samples are constant on each linear element and available for inspection.'
+      : 'Gradient samples shown below are evaluated at the reference centroid of each element.'
   return (
     <section className="panel-card stage-view">
       <h2>Postprocessing</h2>
@@ -978,11 +1042,13 @@ function LoadVectorSection({
 
   const { quadratureSamples, localLoad } = selectedTrace
   const n = localLoad.length
-  const basisSymbol = elementKind === 'quad' ? 'N' : 'φ'
-  const domainSymbol = elementKind === 'quad' ? 'Q' : 'T'
-  const refSymbol = elementKind === 'quad' ? 'Q̂' : 'T̂'
-  const refAreaText = elementKind === 'quad' ? '1 (the area of [0,1]²)' : '½ (the area of the reference triangle)'
-  const jacobianIsConstant = elementKind !== 'quad'
+  const basisSymbol = isQuadKind(elementKind) ? 'N' : 'φ'
+  const domainSymbol = isQuadKind(elementKind) ? 'Q' : 'T'
+  const refSymbol = isQuadKind(elementKind) ? 'Q̂' : 'T̂'
+  const refAreaText = isQuadKind(elementKind)
+    ? '1 (the area of [0,1]²)'
+    : '½ (the area of the reference triangle)'
+  const jacobianIsConstant = !isQuadKind(elementKind)
 
   const sampleBasisContribution = (q: number, i: number): number => {
     const sample = quadratureSamples[q]
@@ -1014,12 +1080,12 @@ function LoadVectorSection({
         </p>
         {jacobianIsConstant ? (
           <p className="small-note">
-            For P1 triangles |det J| is constant on the element, so it can be pulled out of the sum.
+            For triangles |det J| is constant on the element, so it can be pulled out of the sum.
             For this problem f = 1 everywhere, so f(x_q) = 1 at every quadrature point.
           </p>
         ) : (
           <p className="small-note">
-            For Q1 quadrilaterals |det J(ξ_q)| generally varies across the element — on the
+            For quadrilaterals |det J(ξ_q)| generally varies across the element — on the
             structured square mesh it happens to be constant, but the code evaluates it
             per-sample regardless. f(x_q) = 1 at every quadrature point for this problem.
           </p>
@@ -1290,6 +1356,61 @@ function QuadFormulaMatrix({ trace }: { trace: AssemblyElementTrace }) {
 const NODE_COLORS: Record<ElementKind, string[]> = {
   quad: ['#cf5a36', '#d8a137', '#2f8f83', '#4a6fa5'],
   triangle: ['#cf5a36', '#d8a137', '#2f8f83'],
+  'quad-q2': [
+    '#cf5a36',
+    '#d8a137',
+    '#2f8f83',
+    '#4a6fa5',
+    '#a23e7c',
+    '#6c8c2c',
+    '#3b8ec2',
+    '#b9542a',
+    '#5d3a8b',
+  ],
+  'triangle-p2': ['#cf5a36', '#d8a137', '#2f8f83', '#a23e7c', '#6c8c2c', '#3b8ec2'],
+}
+
+function referenceNodeCoords(kind: ElementKind): Array<{ xi: number; eta: number }> {
+  switch (kind) {
+    case 'quad':
+      return [
+        { xi: 0, eta: 0 },
+        { xi: 1, eta: 0 },
+        { xi: 1, eta: 1 },
+        { xi: 0, eta: 1 },
+      ]
+    case 'quad-q2':
+      return [
+        { xi: 0, eta: 0 },
+        { xi: 1, eta: 0 },
+        { xi: 1, eta: 1 },
+        { xi: 0, eta: 1 },
+        { xi: 0.5, eta: 0 },
+        { xi: 1, eta: 0.5 },
+        { xi: 0.5, eta: 1 },
+        { xi: 0, eta: 0.5 },
+        { xi: 0.5, eta: 0.5 },
+      ]
+    case 'triangle':
+      return [
+        { xi: 0, eta: 0 },
+        { xi: 1, eta: 0 },
+        { xi: 0, eta: 1 },
+      ]
+    case 'triangle-p2':
+      return [
+        { xi: 0, eta: 0 },
+        { xi: 1, eta: 0 },
+        { xi: 0, eta: 1 },
+        { xi: 0.5, eta: 0.5 },
+        { xi: 0, eta: 0.5 },
+        { xi: 0.5, eta: 0 },
+      ]
+  }
+}
+
+function referenceCornerCount(kind: ElementKind): number {
+  return isQuadKind(kind) ? 4 : 3
 }
 
 function RefToPhysMappingSvg({
@@ -1303,20 +1424,14 @@ function RefToPhysMappingSvg({
 }) {
   const element = mesh.elements[selectedElementId]
   const colors = NODE_COLORS[elementKind]
+  const basisLetter = isQuadKind(elementKind) ? 'N' : 'φ'
 
-  const refCorners =
-    elementKind === 'quad'
-      ? [
-          { xi: 0, eta: 0, label: 'N₁' },
-          { xi: 1, eta: 0, label: 'N₂' },
-          { xi: 1, eta: 1, label: 'N₃' },
-          { xi: 0, eta: 1, label: 'N₄' },
-        ]
-      : [
-          { xi: 0, eta: 0, label: 'φ₁' },
-          { xi: 1, eta: 0, label: 'φ₂' },
-          { xi: 0, eta: 1, label: 'φ₃' },
-        ]
+  const refCoords = referenceNodeCoords(elementKind)
+  const cornerCount = referenceCornerCount(elementKind)
+  const refCorners = refCoords.map((coord, index) => ({
+    ...coord,
+    label: `${basisLetter}${subscript(index + 1)}`,
+  }))
 
   const W = 560, H = 252
   const OX = 28, OY = 216, S = 174  // ref-panel origin and scale
@@ -1329,16 +1444,17 @@ function RefToPhysMappingSvg({
   const physNodePts = element.nodeIds.map(id => mesh.nodes[id].point)
   const physPts = physNodePts.map(p => toPhys(p.x, p.y))
 
-  const refPolygon = refPts.map(p => `${p.x},${p.y}`).join(' ')
-  const physPolygon = physPts.map(p => `${p.x},${p.y}`).join(' ')
+  const refPolygon = refPts.slice(0, cornerCount).map(p => `${p.x},${p.y}`).join(' ')
+  const physPolygon = physPts.slice(0, cornerCount).map(p => `${p.x},${p.y}`).join(' ')
 
-  const domainLabel = elementKind === 'quad' ? 'Q̂' : 'T̂'
+  const domainLabel = isQuadKind(elementKind) ? 'Q̂' : 'T̂'
 
   // Centroid of each shape in SVG coords, for fill labels
-  const refFillX = elementKind === 'quad' ? OX + S / 2 : OX + S / 3
-  const refFillY = elementKind === 'quad' ? OY - S / 2 : OY - S / 3
-  const physCx = physNodePts.reduce((s, p) => s + p.x, 0) / physNodePts.length
-  const physCy = physNodePts.reduce((s, p) => s + p.y, 0) / physNodePts.length
+  const refFillX = isQuadKind(elementKind) ? OX + S / 2 : OX + S / 3
+  const refFillY = isQuadKind(elementKind) ? OY - S / 2 : OY - S / 3
+  const physCornerPts = physNodePts.slice(0, cornerCount)
+  const physCx = physCornerPts.reduce((s, p) => s + p.x, 0) / physCornerPts.length
+  const physCy = physCornerPts.reduce((s, p) => s + p.y, 0) / physCornerPts.length
   const physFill = toPhys(physCx, physCy)
 
   // Push node labels away from the shape center
@@ -1371,7 +1487,7 @@ function RefToPhysMappingSvg({
         const { dx, dy } = labelOff(pt, refFillX, refFillY)
         return (
           <g key={i}>
-            <circle cx={pt.x} cy={pt.y} r="6" fill={colors[i]} />
+            <circle cx={pt.x} cy={pt.y} r={i < cornerCount ? 6 : 4} fill={colors[i]} />
             <text x={pt.x + dx} y={pt.y + dy} className="reference-node-label">
               {refCorners[i].label}
             </text>
@@ -1398,9 +1514,9 @@ function RefToPhysMappingSvg({
         const { dx, dy } = labelOff(pt, physFill.x, physFill.y)
         return (
           <g key={i}>
-            <circle cx={pt.x} cy={pt.y} r="6" fill={colors[i]} />
+            <circle cx={pt.x} cy={pt.y} r={i < cornerCount ? 6 : 4} fill={colors[i]} />
             <text x={pt.x + dx} y={pt.y + dy} className="reference-node-label">
-              x{['₁', '₂', '₃', '₄'][i]}
+              x{subscript(i + 1)}
             </text>
           </g>
         )
@@ -1437,56 +1553,68 @@ function ReferenceTriangleSvg() {
   )
 }
 
+type BasisDefinition = {
+  name: string
+  formula: string
+  color: string
+  evaluate: (x: number, y: number) => number
+}
+
+function basisDefinitionsFor(kind: ElementKind): BasisDefinition[] {
+  const colors = NODE_COLORS[kind]
+  switch (kind) {
+    case 'quad':
+      return [
+        { name: 'N₁', formula: '(1-ξ)(1-η)', color: colors[0], evaluate: (x, y) => (1 - x) * (1 - y) },
+        { name: 'N₂', formula: 'ξ(1-η)', color: colors[1], evaluate: (x, y) => x * (1 - y) },
+        { name: 'N₃', formula: 'ξη', color: colors[2], evaluate: (x, y) => x * y },
+        { name: 'N₄', formula: '(1-ξ)η', color: colors[3], evaluate: (x, y) => (1 - x) * y },
+      ]
+    case 'triangle':
+      return [
+        { name: 'φ₁', formula: '1 - ξ - η', color: colors[0], evaluate: (x, y) => 1 - x - y },
+        { name: 'φ₂', formula: 'ξ', color: colors[1], evaluate: (x, _y) => x },
+        { name: 'φ₃', formula: 'η', color: colors[2], evaluate: (_x, y) => y },
+      ]
+    case 'quad-q2': {
+      const La = (t: number) => (1 - t) * (1 - 2 * t)
+      const Lb = (t: number) => 4 * t * (1 - t)
+      const Lc = (t: number) => t * (2 * t - 1)
+      const fs: Array<[(t: number) => number, string]> = [
+        [La, 'Lₐ'],
+        [Lb, 'L_b'],
+        [Lc, 'L_c'],
+      ]
+      // Order matches BiquadraticQuadrilateralElement.shapeFunctions
+      const order: Array<[number, number]> = [
+        [0, 0], [2, 0], [2, 2], [0, 2],
+        [1, 0], [2, 1], [1, 2], [0, 1],
+        [1, 1],
+      ]
+      return order.map(([a, b], idx) => ({
+        name: `N${subscript(idx + 1)}`,
+        formula: `${fs[a][1]}(ξ)·${fs[b][1]}(η)`,
+        color: colors[idx],
+        evaluate: (x: number, y: number) => fs[a][0](x) * fs[b][0](y),
+      }))
+    }
+    case 'triangle-p2': {
+      const vertex = (l: number) => l * (2 * l - 1)
+      return [
+        { name: 'φ₁', formula: 'λ₁(2λ₁-1)', color: colors[0], evaluate: (x, y) => vertex(1 - x - y) },
+        { name: 'φ₂', formula: 'λ₂(2λ₂-1)', color: colors[1], evaluate: (x, _y) => vertex(x) },
+        { name: 'φ₃', formula: 'λ₃(2λ₃-1)', color: colors[2], evaluate: (_x, y) => vertex(y) },
+        { name: 'φ₄', formula: '4 λ₂ λ₃', color: colors[3], evaluate: (x, y) => 4 * x * y },
+        { name: 'φ₅', formula: '4 λ₁ λ₃', color: colors[4], evaluate: (x, y) => 4 * (1 - x - y) * y },
+        { name: 'φ₆', formula: '4 λ₁ λ₂', color: colors[5], evaluate: (x, y) => 4 * (1 - x - y) * x },
+      ]
+    }
+  }
+}
+
 function BasisFunctionGallery({ elementKind }: { elementKind: ElementKind }) {
-  const domain = elementKind === 'quad' ? 'square' : 'triangle'
-  const basisDefinitions =
-    elementKind === 'quad'
-      ? ([
-          {
-            name: 'N₁',
-            formula: '(1-ξ)(1-η)',
-            color: '#cf5a36',
-            evaluate: (x: number, y: number) => (1 - x) * (1 - y),
-          },
-          {
-            name: 'N₂',
-            formula: 'ξ(1-η)',
-            color: '#d8a137',
-            evaluate: (x: number, y: number) => x * (1 - y),
-          },
-          {
-            name: 'N₃',
-            formula: 'ξη',
-            color: '#2f8f83',
-            evaluate: (x: number, y: number) => x * y,
-          },
-          {
-            name: 'N₄',
-            formula: '(1-ξ)η',
-            color: '#4a6fa5',
-            evaluate: (x: number, y: number) => (1 - x) * y,
-          },
-        ] as const)
-      : ([
-          {
-            name: 'φ₁',
-            formula: '1 - ξ - η',
-            color: '#cf5a36',
-            evaluate: (x: number, y: number) => 1 - x - y,
-          },
-          {
-            name: 'φ₂',
-            formula: 'ξ',
-            color: '#d8a137',
-            evaluate: (x: number, _y: number) => x,
-          },
-          {
-            name: 'φ₃',
-            formula: 'η',
-            color: '#2f8f83',
-            evaluate: (_x: number, y: number) => y,
-          },
-        ] as const)
+  const domain = isQuadKind(elementKind) ? 'square' : 'triangle'
+  const basisDefinitions = basisDefinitionsFor(elementKind)
 
   return (
     <div className="basis-gallery">
@@ -1553,7 +1681,8 @@ function MeshSvg({
     <svg className="mesh-svg" viewBox={`0 0 ${width} ${height}`}>
       <rect x="0" y="0" width={width} height={height} rx="22" />
       {mesh.elements.map((element) => {
-        const points = element.nodeIds
+        const cornerIds = element.nodeIds.slice(0, referenceCornerCount(mesh.elementKind))
+        const points = cornerIds
           .map((id) => projectPoint(mesh.nodes[id].point, width, height))
           .map((point) => `${point.x},${point.y}`)
           .join(' ')
@@ -1591,7 +1720,8 @@ function SolutionSvg({
       {mesh.elements.map((element) => {
         const sample = sampleMap.get(element.id)
         const color = sample ? colorForValue(sample.averageValue, minValue, maxValue) : '#d7e1ec'
-        const points = element.nodeIds
+        const cornerIds = element.nodeIds.slice(0, referenceCornerCount(mesh.elementKind))
+        const points = cornerIds
           .map((id) => projectPoint(mesh.nodes[id].point, width, height))
           .map((point) => `${point.x},${point.y}`)
           .join(' ')
@@ -1683,8 +1813,29 @@ function clampSelectedElementId(config: SimulationConfig, elementCount: number):
 }
 
 function elementLabel(kind: ElementKind, plural: boolean): string {
-  if (kind === 'quad') return plural ? 'Quadrilaterals' : 'Quadrilateral'
+  if (isQuadKind(kind)) return plural ? 'Quadrilaterals' : 'Quadrilateral'
   return plural ? 'Triangles' : 'Triangle'
+}
+
+function isQuadKind(kind: ElementKind): boolean {
+  return kind === 'quad' || kind === 'quad-q2'
+}
+
+function isHigherOrder(kind: ElementKind): boolean {
+  return kind === 'quad-q2' || kind === 'triangle-p2'
+}
+
+function elementOrderLabel(kind: ElementKind): string {
+  switch (kind) {
+    case 'triangle':
+      return 'P1'
+    case 'quad':
+      return 'Q1'
+    case 'triangle-p2':
+      return 'P2'
+    case 'quad-q2':
+      return 'Q2'
+  }
 }
 
 function quadratureLabel(kind: QuadratureKind): string {
@@ -1697,6 +1848,10 @@ function quadratureLabel(kind: QuadratureKind): string {
       return 'Trapezoidal (corners)'
     case 'quad-gauss2x2':
       return 'Gauss 2×2'
+    case 'quad-gauss3x3':
+      return 'Gauss 3×3'
+    case 'triangle-gauss3':
+      return '3-point degree-2 (triangle)'
   }
 }
 
