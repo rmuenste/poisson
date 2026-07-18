@@ -11,6 +11,11 @@ import {
   type QuadratureKind,
 } from './core/quadrature/quadrature.ts'
 import { PlotlySurfacePlot } from './ui/PlotlySurfacePlot.tsx'
+import {
+  InteractiveMeshView,
+  projectPoint,
+  referenceCornerCount,
+} from './ui/InteractiveMeshView.tsx'
 
 const pipeline = new SimulationPipeline(createDefaultStageRegistry())
 
@@ -44,6 +49,16 @@ function App() {
       ? provisionalSnapshot
       : pipeline.run(effectiveConfig)
   const selectedTrace = snapshot.assemblyStage.trace.selectedElementTrace
+
+  const handleSelectElement = React.useCallback(
+    (elementId: number) =>
+      setConfig((current) =>
+        current.selectedElementId === elementId
+          ? current
+          : { ...current, selectedElementId: elementId },
+      ),
+    [setConfig],
+  )
 
   return (
     <div className="app-shell">
@@ -233,6 +248,7 @@ function App() {
               selectedElementId={effectiveConfig.selectedElementId}
               refinementHistory={snapshot.meshStage.refinementHistory}
               elementKind={snapshot.meshStage.mesh.elementKind}
+              onSelectElement={handleSelectElement}
             />
           ) : null}
 
@@ -263,6 +279,7 @@ function App() {
               mesh={snapshot.meshStage.mesh}
               selectedElementDofs={selectedTrace?.nodeIds}
               elementKind={snapshot.meshStage.mesh.elementKind}
+              onSelectElement={handleSelectElement}
             />
           ) : null}
 
@@ -369,11 +386,13 @@ function MeshStageView({
   selectedElementId,
   refinementHistory,
   elementKind,
+  onSelectElement,
 }: {
   mesh: Mesh
   selectedElementId: number
   refinementHistory: Array<{ label: string; divisions: number; nodeCount: number; elementCount: number }>
   elementKind: ElementKind
+  onSelectElement: (elementId: number) => void
 }) {
   const elementsWord = elementLabel(elementKind, true).toLowerCase()
   const meshDescription = (() => {
@@ -397,7 +416,15 @@ function MeshStageView({
         </div>
         <span className="badge">selected element #{selectedElementId}</span>
       </div>
-      <MeshSvg mesh={mesh} selectedElementId={selectedElementId} />
+      <InteractiveMeshView
+        mesh={mesh}
+        selectedElementId={selectedElementId}
+        onSelectElement={onSelectElement}
+      />
+      <p className="small-note">
+        Click an element to select it, or hover for its node ids. The sidebar slider stays in
+        sync.
+      </p>
       <div className="table-grid">
         {refinementHistory.map((entry) => (
           <div key={entry.label} className="mini-card">
@@ -788,12 +815,14 @@ function AssemblyStageView({
   mesh,
   selectedElementDofs,
   elementKind,
+  onSelectElement,
 }: {
   selectedTrace: AssemblyElementTrace | undefined
   densePreview: number[][]
   mesh: Mesh
   selectedElementDofs: number[] | undefined
   elementKind: ElementKind
+  onSelectElement: (elementId: number) => void
 }) {
   const fallbackDofCount = (() => {
     switch (elementKind) {
@@ -944,7 +973,13 @@ function AssemblyStageView({
         Boundary conditions are applied after assembly so the app can show the unconstrained
         finite element system and then the constrained linear system separately.
       </p>
-      <MeshSvg mesh={mesh} selectedElementId={selectedTrace?.elementId ?? 0} compact />
+      <p className="small-note">Click an element to inspect its assembly trace.</p>
+      <InteractiveMeshView
+        mesh={mesh}
+        selectedElementId={selectedTrace?.elementId ?? 0}
+        onSelectElement={onSelectElement}
+        compact
+      />
     </section>
   )
 }
@@ -1409,10 +1444,6 @@ function referenceNodeCoords(kind: ElementKind): Array<{ xi: number; eta: number
   }
 }
 
-function referenceCornerCount(kind: ElementKind): number {
-  return isQuadKind(kind) ? 4 : 3
-}
-
 function RefToPhysMappingSvg({
   elementKind,
   mesh,
@@ -1665,40 +1696,6 @@ function ReferenceSquareSvg() {
   )
 }
 
-function MeshSvg({
-  mesh,
-  selectedElementId,
-  compact = false,
-}: {
-  mesh: Mesh
-  selectedElementId: number
-  compact?: boolean
-}) {
-  const width = compact ? 260 : 420
-  const height = compact ? 260 : 420
-
-  return (
-    <svg className="mesh-svg" viewBox={`0 0 ${width} ${height}`}>
-      <rect x="0" y="0" width={width} height={height} rx="22" />
-      {mesh.elements.map((element) => {
-        const cornerIds = element.nodeIds.slice(0, referenceCornerCount(mesh.elementKind))
-        const points = cornerIds
-          .map((id) => projectPoint(mesh.nodes[id].point, width, height))
-          .map((point) => `${point.x},${point.y}`)
-          .join(' ')
-
-        return (
-          <polygon
-            key={element.id}
-            points={points}
-            className={element.id === selectedElementId ? 'mesh-element selected' : 'mesh-element'}
-          />
-        )
-      })}
-    </svg>
-  )
-}
-
 function SolutionSvg({
   mesh,
   elementSamples,
@@ -1773,14 +1770,6 @@ function SparsityPlot({
       )}
     </svg>
   )
-}
-
-function projectPoint(point: Vector2, width: number, height: number): Vector2 {
-  const padding = 24
-  return {
-    x: padding + point.x * (width - 2 * padding),
-    y: height - padding - point.y * (height - 2 * padding),
-  }
 }
 
 function colorForValue(value: number, minValue: number, maxValue: number): string {

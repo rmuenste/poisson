@@ -180,15 +180,139 @@
 }
 
 .mesh-element {
-  fill: rgba(213, 190, 161, 0.34);
-  stroke: rgba(68, 72, 84, 0.34);
+  fill: rgba(213, 190, 161, 0.22);
+  stroke: rgba(68, 72, 84, 0.28);
   stroke-width: 1;
+  transition: fill 90ms ease;
+}
+
+.mesh-element:hover {
+  fill: rgba(47, 143, 131, 0.26);
+  stroke: rgba(47, 143, 131, 0.65);
 }
 
 .mesh-element.selected {
-  fill: rgba(216, 110, 59, 0.38);
-  stroke: rgba(119, 46, 14, 0.92);
+  fill: rgba(216, 110, 59, 0.4);
+  stroke: rgba(119, 46, 14, 0.9);
   stroke-width: 2.2;
+}
+
+.mesh-element.selected:hover {
+  fill: rgba(216, 110, 59, 0.52);
+}
+
+.mesh-view {
+  position: relative;
+  display: grid;
+  gap: 10px;
+}
+
+.mesh-view-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mesh-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.mesh-toggle input {
+  accent-color: var(--accent);
+}
+
+.mesh-svg.interactive {
+  cursor: pointer;
+  border-radius: 20px;
+}
+
+.mesh-svg.interactive:focus-visible {
+  outline: 2px solid rgba(216, 110, 59, 0.55);
+  outline-offset: 3px;
+}
+
+.mesh-selected-outline {
+  fill: none;
+  stroke: var(--accent-deep);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.mesh-node.boundary {
+  fill: #d86e3b;
+  stroke: rgba(119, 46, 14, 0.75);
+  stroke-width: 0.8;
+}
+
+.mesh-node.free {
+  fill: #2f8f83;
+  stroke: rgba(31, 90, 82, 0.6);
+  stroke-width: 0.8;
+}
+
+.mesh-tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 5;
+  max-width: 260px;
+  padding: 8px 11px;
+  border-radius: 12px;
+  background: rgba(255, 251, 245, 0.97);
+  border: 1px solid rgba(165, 101, 61, 0.28);
+  box-shadow: 0 10px 24px rgba(94, 60, 28, 0.16);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-main);
+}
+
+.mesh-tooltip strong {
+  color: var(--accent-deep);
+}
+
+.mesh-tooltip .mono {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.mesh-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.mesh-legend .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: -1px;
+}
+
+.mesh-legend .dot.boundary {
+  background: #d86e3b;
+}
+
+.mesh-legend .dot.free {
+  background: #2f8f83;
+}
+
+.mesh-legend .dot.small {
+  width: 6px;
+  height: 6px;
 }
 
 .reference-triangle-shape {
