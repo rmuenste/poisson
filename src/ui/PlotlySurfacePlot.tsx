@@ -61,8 +61,10 @@ type Scatter3DTrace = {
 type AxisSpec = {
   title: { text: string; font: { size: number } }
   range: [number, number]
+  showbackground: boolean
   backgroundcolor: string
   gridcolor: string
+  gridwidth: number
   zerolinecolor: string
   tickfont: { size: number }
   nticks: number
@@ -273,9 +275,13 @@ function axis(title: string): AxisSpec {
   return {
     title: { text: title, font: { size: 11 } },
     range: [0, 1.05],
-    backgroundcolor: 'rgba(244, 235, 221, 0.38)',
-    gridcolor: 'rgba(70, 70, 80, 0.09)',
-    zerolinecolor: 'rgba(70, 70, 80, 0.14)',
+    // gl3d ignores backgroundcolor unless showbackground is on, and renders
+    // rgba axis colors washed out — use solid hex for walls and gridlines.
+    showbackground: true,
+    backgroundcolor: '#f3e9da',
+    gridcolor: '#b5a68e',
+    gridwidth: 1.5,
+    zerolinecolor: '#8a7a62',
     tickfont: { size: 9 },
     nticks: 4,
     showspikes: false,
