@@ -1,4 +1,5 @@
 import * as React from 'react'
+import type { IFiniteElement } from '../../core/fem/elements.ts'
 import type { ElementKind, Mesh } from '../../core/fem/mesh.ts'
 import { ReferenceSquareSvg, ReferenceTriangleSvg, RefToPhysMappingSvg } from '../referenceShapes.tsx'
 import { NODE_COLORS, isHigherOrder, isQuadKind, subscript } from '../shared.ts'
@@ -15,6 +16,7 @@ export function SpaceStageView({
   selectedElementId,
   mesh,
   elementKind,
+  finiteElement,
 }: {
   dofCount: number
   constrainedDofs: number[]
@@ -22,6 +24,7 @@ export function SpaceStageView({
   selectedElementId: number
   mesh: Mesh
   elementKind: ElementKind
+  finiteElement: IFiniteElement
 }) {
   const element = mesh.elements[selectedElementId]
   const basisHeading = (() => {
@@ -142,6 +145,7 @@ export function SpaceStageView({
           elementKind={elementKind}
           mesh={mesh}
           selectedElementId={selectedElementId}
+          finiteElement={finiteElement}
         />
         <p className="small-note" style={{ marginTop: '10px' }}>
           {isQuadKind(elementKind)
@@ -156,7 +160,7 @@ export function SpaceStageView({
       </article>
       <article>
         <h3>Basis functions on the reference element</h3>
-        <BasisFunctionGallery elementKind={elementKind} />
+        <BasisFunctionGallery key={elementKind} elementKind={elementKind} />
       </article>
       <p className="small-note">
         Dirichlet nodes stay in the global numbering but are constrained explicitly in the
@@ -228,25 +232,40 @@ function basisDefinitionsFor(kind: ElementKind): BasisDefinition[] {
 function BasisFunctionGallery({ elementKind }: { elementKind: ElementKind }) {
   const domain = isQuadKind(elementKind) ? 'square' : 'triangle'
   const basisDefinitions = basisDefinitionsFor(elementKind)
+  const [selectedIndex, setSelectedIndex] = React.useState(0)
+  const active = basisDefinitions[Math.min(selectedIndex, basisDefinitions.length - 1)]
 
   return (
-    <div className="basis-gallery">
-      {basisDefinitions.map((basis) => (
-        <div key={basis.name} className="basis-card">
-          <div className="basis-heading">
+    <div className="basis-explorer">
+      <div className="basis-chips" role="tablist" aria-label="Basis function selector">
+        {basisDefinitions.map((basis, index) => (
+          <button
+            key={basis.name}
+            role="tab"
+            aria-selected={basis === active}
+            className={basis === active ? 'basis-chip active' : 'basis-chip'}
+            onClick={() => setSelectedIndex(index)}
+          >
+            <i className="dot" style={{ background: basis.color }} aria-hidden="true" />
             <strong>{basis.name}</strong>
             <span>{basis.formula}</span>
-          </div>
-          <React.Suspense fallback={<div className="plotly-surface" aria-busy="true" />}>
-            <PlotlySurfacePlot
-              color={basis.color}
-              evaluate={basis.evaluate}
-              label={basis.name}
-              domain={domain}
-            />
-          </React.Suspense>
-        </div>
-      ))}
+          </button>
+        ))}
+      </div>
+      <div className="basis-featured">
+        <React.Suspense fallback={<div className="plotly-surface" aria-busy="true" />}>
+          <PlotlySurfacePlot
+            color={active.color}
+            evaluate={active.evaluate}
+            label={active.name}
+            domain={domain}
+          />
+        </React.Suspense>
+      </div>
+      <p className="small-note">
+        Drag to rotate — the camera angle is kept when switching functions, so you can compare
+        them from the same viewpoint.
+      </p>
     </div>
   )
 }

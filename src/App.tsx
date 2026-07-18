@@ -270,6 +270,7 @@ function App() {
               selectedElementId={effectiveConfig.selectedElementId}
               mesh={snapshot.meshStage.mesh}
               elementKind={snapshot.meshStage.mesh.elementKind}
+              finiteElement={snapshot.spaceStage.finiteElement}
             />
           ) : null}
 

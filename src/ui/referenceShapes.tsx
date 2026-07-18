@@ -1,6 +1,13 @@
+import * as React from 'react'
+import {
+  computeJacobianAt,
+  createElementGeometry,
+  mapToPhysicalPoint,
+  type IFiniteElement,
+} from '../core/fem/elements.ts'
 import type { ElementKind, Mesh, Vector2 } from '../core/fem/mesh.ts'
 import { referenceCornerCount } from './InteractiveMeshView.tsx'
-import { NODE_COLORS, isQuadKind, referenceNodeCoords, subscript } from './shared.ts'
+import { NODE_COLORS, formatNumber, isQuadKind, referenceNodeCoords, subscript } from './shared.ts'
 
 export function ReferenceTriangleSvg() {
   const vertices = [
@@ -63,14 +70,24 @@ export function RefToPhysMappingSvg({
   elementKind,
   mesh,
   selectedElementId,
+  finiteElement,
 }: {
   elementKind: ElementKind
   mesh: Mesh
   selectedElementId: number
+  finiteElement: IFiniteElement
 }) {
   const element = mesh.elements[selectedElementId]
   const colors = NODE_COLORS[elementKind]
   const basisLetter = isQuadKind(elementKind) ? 'N' : 'φ'
+
+  const svgRef = React.useRef<SVGSVGElement | null>(null)
+  const [probe, setProbe] = React.useState<Vector2 | null>(null)
+  const [pinned, setPinned] = React.useState(false)
+  const geometry = React.useMemo(
+    () => createElementGeometry(mesh, element),
+    [mesh, element],
+  )
 
   const refCoords = referenceNodeCoords(elementKind)
   const cornerCount = referenceCornerCount(elementKind)
@@ -113,8 +130,73 @@ export function RefToPhysMappingSvg({
   const ax2 = RX + OX - 16
   const arrowY = H / 2 - 8
 
+  const clampToDomain = (xi: number, eta: number): Vector2 => {
+    let x = Math.min(1, Math.max(0, xi))
+    let y = Math.min(1, Math.max(0, eta))
+    if (!isQuadKind(elementKind) && x + y > 1) {
+      const excess = (x + y - 1) / 2
+      x = Math.min(1, Math.max(0, x - excess))
+      y = Math.min(1, Math.max(0, y - excess))
+    }
+    return { x, y }
+  }
+
+  const probeFromEvent = (event: React.PointerEvent): Vector2 | null => {
+    const svg = svgRef.current
+    if (!svg) return null
+    const rect = svg.getBoundingClientRect()
+    const scale = rect.width / W
+    const svgX = (event.clientX - rect.left) / scale
+    const svgY = (event.clientY - rect.top) / scale
+    const xi = (svgX - OX) / S
+    const eta = (OY - svgY) / S
+    // Only probe while the pointer is over (or near) the reference panel.
+    if (xi < -0.08 || xi > 1.15 || eta < -0.08 || eta > 1.15) return null
+    return clampToDomain(xi, eta)
+  }
+
+  const handlePointerMove = (event: React.PointerEvent) => {
+    if (pinned) return
+    setProbe(probeFromEvent(event))
+  }
+
+  const handlePointerLeave = () => {
+    if (!pinned) setProbe(null)
+  }
+
+  const handleClick = (event: React.PointerEvent | React.MouseEvent) => {
+    if (pinned) {
+      setPinned(false)
+      setProbe(probeFromEvent(event as React.PointerEvent))
+      return
+    }
+    const next = probeFromEvent(event as React.PointerEvent)
+    if (next) {
+      setProbe(next)
+      setPinned(true)
+    }
+  }
+
+  const probeData = probe
+    ? {
+        physical: mapToPhysicalPoint(finiteElement, geometry, probe),
+        determinant: computeJacobianAt(finiteElement, geometry, probe).determinant,
+        shapeValues: finiteElement.shapeFunctions(probe),
+      }
+    : null
+  const probeRefPt = probe ? toRef(probe.x, probe.y) : null
+  const probePhysPt = probeData ? toPhys(probeData.physical.x, probeData.physical.y) : null
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="reference-svg">
+    <div className="map-explorer">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="reference-svg map-interactive"
+      ref={svgRef}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      onClick={handleClick}
+    >
       <rect x="0" y="0" width={W} height={H} rx="22" />
       <defs>
         <marker id="map-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
@@ -167,6 +249,52 @@ export function RefToPhysMappingSvg({
           </g>
         )
       })}
+
+      {/* Probe: reference point and its image under F */}
+      {probeRefPt && probePhysPt ? (
+        <g pointerEvents="none">
+          <line
+            x1={probeRefPt.x}
+            y1={probeRefPt.y}
+            x2={probePhysPt.x}
+            y2={probePhysPt.y}
+            className="map-probe-link"
+          />
+          <circle cx={probeRefPt.x} cy={probeRefPt.y} r="5" className="map-probe-point" />
+          <circle cx={probePhysPt.x} cy={probePhysPt.y} r="5" className="map-probe-point" />
+        </g>
+      ) : null}
     </svg>
+    <div className="map-probe-readout" aria-live="polite">
+      {probe && probeData ? (
+        <>
+          <div className="map-probe-line">
+            <span className="mono">
+              F({formatNumber(probe.x)}, {formatNumber(probe.y)}) = (
+              {formatNumber(probeData.physical.x)}, {formatNumber(probeData.physical.y)})
+            </span>
+            <span className="mono">det J = {formatNumber(probeData.determinant)}</span>
+            {pinned ? <span className="map-probe-pin">pinned — click to release</span> : null}
+          </div>
+          <div className="map-probe-chips">
+            {probeData.shapeValues.map((value, i) => (
+              <span key={i} className="map-chip">
+                <i style={{ background: colors[i] }} aria-hidden="true" />
+                {basisLetter}{subscript(i + 1)} = {value.toFixed(3)}
+              </span>
+            ))}
+            <span className="map-chip map-chip-sum">
+              Σ = {probeData.shapeValues.reduce((acc, v) => acc + v, 0).toFixed(3)}
+            </span>
+          </div>
+        </>
+      ) : (
+        <span className="map-probe-hint">
+          Move the pointer over the reference element to probe the map F — the image point
+          appears in the physical element. Click to pin the probe.
+        </span>
+      )}
+    </div>
+    </div>
   )
 }

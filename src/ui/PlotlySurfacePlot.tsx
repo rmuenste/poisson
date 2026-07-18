@@ -106,7 +106,9 @@ export function PlotlySurfacePlot({
         zaxis: axis('φ'),
       },
       showlegend: false,
-      uirevision: `${label}-surface`,
+      // Constant revision: keep the user's camera angle when switching between
+      // basis functions in the same container.
+      uirevision: 'basis-surface',
     }
     const config: Partial<Config> = {
       displayModeBar: true,
@@ -119,11 +121,18 @@ export function PlotlySurfacePlot({
       layout,
       config,
     )
-
-    return () => {
-      void Plotly.purge(container as PlotlyHTMLElement)
-    }
   }, [color, evaluate, label, domain])
+
+  // Purge only on unmount — purging between basis switches would destroy the
+  // WebGL context and reset the camera despite the constant uirevision.
+  React.useEffect(() => {
+    const container = containerRef.current
+    return () => {
+      if (container) {
+        void Plotly.purge(container as PlotlyHTMLElement)
+      }
+    }
+  }, [])
 
   return <div ref={containerRef} className="plotly-surface" aria-label={`${label} surface plot`} />
 }
