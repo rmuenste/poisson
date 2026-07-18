@@ -16,6 +16,10 @@ import { PostprocessStageView } from './ui/stages/PostprocessStageView.tsx'
 
 const pipeline = new SimulationPipeline(createDefaultStageRegistry())
 
+// Above this the dense O(n³) LU (a deliberate teaching choice) makes every
+// config change take multiple seconds in the browser.
+const LARGE_SOLVE_DOF_THRESHOLD = 1500
+
 const stageOrder = [
   'problem',
   'mesh',
@@ -46,6 +50,7 @@ function App() {
       ? provisionalSnapshot
       : pipeline.run(effectiveConfig)
   const selectedTrace = snapshot.assemblyStage.trace.selectedElementTrace
+  const dofCount = snapshot.spaceStage.space.dofCount
 
   const handleSelectElement = React.useCallback(
     (elementId: number) =>
@@ -234,6 +239,14 @@ function App() {
               value={formatNumber(snapshot.solveStage.trace.residualNorm)}
             />
           </section>
+
+          {dofCount > LARGE_SOLVE_DOF_THRESHOLD ? (
+            <p className="solver-warning">
+              ⚠ {dofCount.toLocaleString()} unknowns — the intentionally simple dense O(n³)
+              solver now dominates each update, so configuration changes may take noticeably
+              longer. Reduce divisions or refinement for a snappier experience.
+            </p>
+          ) : null}
 
           {activeStage === 'problem' ? (
             <ProblemStageView equation={snapshot.problemStage.problem.equation} weakForm={snapshot.problemStage.problem.weakFormText} />

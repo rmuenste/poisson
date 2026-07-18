@@ -1,7 +1,12 @@
+import * as React from 'react'
 import type { ElementKind, Mesh } from '../../core/fem/mesh.ts'
-import { PlotlySurfacePlot } from '../PlotlySurfacePlot.tsx'
 import { ReferenceSquareSvg, ReferenceTriangleSvg, RefToPhysMappingSvg } from '../referenceShapes.tsx'
 import { NODE_COLORS, isHigherOrder, isQuadKind, subscript } from '../shared.ts'
+
+// Plotly is ~4.5 MB minified; load it only when the space stage is opened.
+const PlotlySurfacePlot = React.lazy(() =>
+  import('../PlotlySurfacePlot.tsx').then((module) => ({ default: module.PlotlySurfacePlot })),
+)
 
 export function SpaceStageView({
   dofCount,
@@ -232,12 +237,14 @@ function BasisFunctionGallery({ elementKind }: { elementKind: ElementKind }) {
             <strong>{basis.name}</strong>
             <span>{basis.formula}</span>
           </div>
-          <PlotlySurfacePlot
-            color={basis.color}
-            evaluate={basis.evaluate}
-            label={basis.name}
-            domain={domain}
-          />
+          <React.Suspense fallback={<div className="plotly-surface" aria-busy="true" />}>
+            <PlotlySurfacePlot
+              color={basis.color}
+              evaluate={basis.evaluate}
+              label={basis.name}
+              domain={domain}
+            />
+          </React.Suspense>
         </div>
       ))}
     </div>
