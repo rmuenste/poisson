@@ -3,6 +3,7 @@ import {
   HomogeneousDirichletConstraintHandler,
   SparseMatrix,
   residualNorm,
+  type IConstraintHandler,
 } from '../algebra/linearAlgebra.ts'
 import { UnitSquarePoissonProblem } from '../domain/problem.ts'
 import {
@@ -168,9 +169,7 @@ export class WeakFormStage implements IWeakFormStage {
 export class AssemblyStage implements IAssemblyStage {
   readonly id = 'assembly'
 
-  constructor(
-    private readonly constraintHandler: HomogeneousDirichletConstraintHandler,
-  ) {}
+  constructor(private readonly constraintHandler: IConstraintHandler) {}
 
   run({
     config,

@@ -1,5 +1,4 @@
 import type {
-  DenseDirectSolver,
   IConstraintHandler,
   ILinearSolver,
   SparseMatrix,
@@ -116,7 +115,7 @@ export interface ISolveStage
     {
       matrix: number[][]
       rhs: number[]
-      defaultSolver: DenseDirectSolver
+      defaultSolver: ILinearSolver
     },
     SolveStageResult
   > {}
@@ -142,5 +141,5 @@ export type StageRegistry = {
   solver: ISolveStage
   postprocess: IPostprocessStage
   constraintHandler: IConstraintHandler
-  defaultSolver: DenseDirectSolver
+  defaultSolver: ILinearSolver
 }
