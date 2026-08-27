@@ -8,6 +8,10 @@ they are implemented.
 
 - **Poisson Solver** — available. A 2D finite element prototype for
   `-Δu = 1` in `(0,1)^2`, with `u = 0` on `∂Ω`.
+- **Discrete Projection** — available. Theory of Turek's PP scheme: from the
+  incompressible Navier–Stokes equations through the pressure Schur complement
+  to the five substeps of the discrete projection method, and why its pressure
+  step is the Poisson problem the first topic assembles.
 - **Convection–Diffusion**, **Time Stepping**, **Iterative Solvers** — planned;
   selecting one shows the coverage it is reserved for.
 
@@ -86,7 +90,9 @@ npm test
 - Topics live in [src/topics](src/topics) and are registered in
   [src/topics/registry.ts](src/topics/registry.ts). The Poisson topic is
   [src/topics/poisson/PoissonTopic.tsx](src/topics/poisson/PoissonTopic.tsx);
-  its stage views live in [src/ui/stages](src/ui/stages).
+  its stage views live in [src/ui/stages](src/ui/stages). The projection topic is
+  [src/topics/projection](src/topics/projection), with its section views and
+  inline-SVG figures in its own `sections/` and `figures/` folders.
 - The numerical pipeline contracts are defined in
   [src/core/pipeline/contracts.ts](src/core/pipeline/contracts.ts).
 - The current design principles are documented in

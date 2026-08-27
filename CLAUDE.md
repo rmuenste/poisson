@@ -34,6 +34,7 @@ Numerical Core → Trace Objects → UI
 | `src/topics/registry.ts` | The list of topics; the only place that knows which exist |
 | `src/topics/types.ts` | `Topic` interface + `TopicStatus` |
 | `src/topics/poisson/` | The Poisson FEM explorer topic (`PoissonTopic.tsx`, `meta.ts`) |
+| `src/topics/projection/` | Discrete projection (PP) theory topic — `sections/` prose+equations, `figures/` inline SVG |
 
 ## Key Design Rules
 

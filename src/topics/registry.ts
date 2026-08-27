@@ -1,6 +1,8 @@
 import type { Topic } from './types.ts'
 import { PoissonTopic } from './poisson/PoissonTopic.tsx'
 import { poissonTopicMeta } from './poisson/meta.ts'
+import { ProjectionTopic } from './projection/ProjectionTopic.tsx'
+import { projectionTopicMeta } from './projection/meta.ts'
 
 /**
  * The single place that knows which topics exist. Adding a topic means adding an
@@ -8,6 +10,7 @@ import { poissonTopicMeta } from './poisson/meta.ts'
  */
 export const topics: Topic[] = [
   { ...poissonTopicMeta, View: PoissonTopic },
+  { ...projectionTopicMeta, View: ProjectionTopic },
   {
     id: 'convection-diffusion',
     title: 'Convection–Diffusion',

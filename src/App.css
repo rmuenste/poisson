@@ -886,3 +886,270 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ---------- Discrete projection topic ---------- */
+
+.notation-table {
+  display: grid;
+  grid-template-columns: minmax(56px, auto) minmax(0, 1fr);
+  gap: 6px 12px;
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+}
+
+.notation-table dt {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+.notation-table dd {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.algorithm-steps {
+  list-style: none;
+  counter-reset: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.algorithm-steps > li {
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255, 248, 239, 0.82);
+  border: 1px solid rgba(165, 101, 61, 0.14);
+}
+
+.algorithm-step-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.algorithm-step-head h3 {
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.algorithm-step-index {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(216, 110, 59, 0.9), rgba(233, 186, 82, 0.9));
+  color: #fffaf2;
+  font-size: 0.85rem;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+.algorithm-steps .math-block {
+  margin-bottom: 10px;
+}
+
+.math-block.small {
+  font-size: 0.86rem;
+  padding: 10px 12px;
+}
+
+.figure {
+  margin: 0;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(255, 248, 239, 0.82);
+  border: 1px solid rgba(165, 101, 61, 0.14);
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.figure-caption {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 62ch;
+}
+
+.topic-figure {
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  overflow: visible;
+}
+
+/* Figure primitives. Colours match the accent tokens used elsewhere. */
+.fig-cell {
+  fill: rgba(255, 251, 245, 0.9);
+  stroke: rgba(140, 88, 58, 0.45);
+  stroke-width: 1.4;
+}
+
+.fig-velocity-node {
+  fill: rgba(47, 143, 131, 0.95);
+}
+
+.fig-pressure-node {
+  fill: rgba(216, 110, 59, 0.2);
+  stroke: rgba(180, 91, 44, 0.6);
+  stroke-width: 1.2;
+}
+
+.fig-block,
+.fig-vector,
+.fig-step {
+  fill: rgba(255, 251, 245, 0.95);
+  stroke: rgba(140, 88, 58, 0.38);
+  stroke-width: 1.3;
+}
+
+.fig-block.empty {
+  fill: rgba(233, 186, 82, 0.16);
+  stroke-dasharray: 5 4;
+}
+
+.fig-block.accent {
+  fill: rgba(216, 110, 59, 0.14);
+  stroke: rgba(180, 91, 44, 0.5);
+}
+
+.fig-step.solve {
+  fill: rgba(216, 110, 59, 0.14);
+  stroke: rgba(180, 91, 44, 0.45);
+}
+
+.fig-block-label {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  fill: var(--text-main);
+}
+
+.fig-block-label.small {
+  font-size: 0.8rem;
+}
+
+.fig-block-label.empty {
+  fill: var(--accent-deep);
+}
+
+.fig-label {
+  font-size: 0.66rem;
+  fill: var(--text-muted);
+}
+
+.fig-label-strong {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  fill: var(--text-main);
+}
+
+.fig-label-strong.accent {
+  fill: var(--accent-deep);
+}
+
+.fig-step-index {
+  fill: rgba(216, 110, 59, 0.85);
+}
+
+.fig-step-index-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  fill: #fffaf2;
+}
+
+.fig-step-equation {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  fill: var(--text-main);
+}
+
+.fig-arrow,
+.fig-leader {
+  fill: none;
+  stroke: rgba(140, 88, 58, 0.55);
+  stroke-width: 1.3;
+}
+
+.fig-leader {
+  stroke-dasharray: 4 3;
+}
+
+.fig-arrow-head {
+  fill: rgba(140, 88, 58, 0.75);
+}
+
+.fig-arrow-head.accent {
+  fill: rgba(47, 143, 131, 0.95);
+}
+
+.fig-vector-arrow {
+  fill: none;
+  stroke-width: 2.2;
+}
+
+.fig-vector-arrow.intermediate {
+  stroke: rgba(140, 88, 58, 0.75);
+}
+
+.fig-vector-arrow.divergence-free {
+  stroke: rgba(47, 143, 131, 0.95);
+}
+
+.fig-vector-arrow.gradient {
+  stroke: rgba(140, 88, 58, 0.75);
+  stroke-dasharray: 6 4;
+}
+
+.fig-origin {
+  fill: var(--text-main);
+}
+
+.fig-stencil-link {
+  stroke: rgba(140, 88, 58, 0.4);
+  stroke-width: 1.4;
+}
+
+.fig-stencil-node {
+  fill: rgba(255, 251, 245, 0.98);
+  stroke: rgba(140, 88, 58, 0.45);
+  stroke-width: 1.3;
+}
+
+.fig-stencil-node.center {
+  fill: rgba(216, 110, 59, 0.18);
+  stroke: rgba(180, 91, 44, 0.55);
+}
+
+/* Multi-row equations keep their alignment; single-row blocks still wrap. */
+.math-block.stacked {
+  white-space: pre;
+  line-height: 1.65;
+}
+
+/* Term-by-term gloss under an equation. */
+.term-list {
+  display: grid;
+  grid-template-columns: minmax(70px, auto) minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.term-list dt {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+.term-list dd {
+  margin: 0;
+  color: var(--text-muted);
+}
