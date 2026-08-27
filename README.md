@@ -1,10 +1,23 @@
-# Poisson FEM Explorer
+# Numerics Explorer
 
-A browser-based 2D finite element prototype for the Poisson problem
+A browser-based collection of interactive finite element topics. A menu at the
+top of the page selects the topic; further topics are listed as *planned* until
+they are implemented.
 
-`-Δu = 1` in `(0,1)^2`, with `u = 0` on `∂Ω`.
+## Topics
 
-The app is designed as both a solver and a teaching tool. It includes:
+- **Poisson Solver** — available. A 2D finite element prototype for
+  `-Δu = 1` in `(0,1)^2`, with `u = 0` on `∂Ω`.
+- **Discrete Projection** — available. Theory of Turek's PP scheme: from the
+  incompressible Navier–Stokes equations through the pressure Schur complement
+  to the five substeps of the discrete projection method, and why its pressure
+  step is the Poisson problem the first topic assembles.
+- **Convection–Diffusion**, **Time Stepping**, **Iterative Solvers** — planned;
+  selecting one shows the coverage it is reserved for.
+
+## The Poisson Solver Topic
+
+Designed as both a solver and a teaching tool. It includes:
 
 - a configurable FEM pipeline with replaceable stage services
 - four element types: P1/P2 triangles and Q1/Q2 quadrilaterals
@@ -72,8 +85,14 @@ npm test
 ## Project Notes
 
 - Source code lives in [src](src).
-- The main app entry point is [src/App.tsx](src/App.tsx); stage views live in
-  [src/ui/stages](src/ui/stages).
+- [src/App.tsx](src/App.tsx) is the shell: it renders the topic menu and the
+  active topic, nothing more.
+- Topics live in [src/topics](src/topics) and are registered in
+  [src/topics/registry.ts](src/topics/registry.ts). The Poisson topic is
+  [src/topics/poisson/PoissonTopic.tsx](src/topics/poisson/PoissonTopic.tsx);
+  its stage views live in [src/ui/stages](src/ui/stages). The projection topic is
+  [src/topics/projection](src/topics/projection), with its section views and
+  inline-SVG figures in its own `sections/` and `figures/` folders.
 - The numerical pipeline contracts are defined in
   [src/core/pipeline/contracts.ts](src/core/pipeline/contracts.ts).
 - The current design principles are documented in
