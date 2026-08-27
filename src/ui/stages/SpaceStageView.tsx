@@ -2,7 +2,15 @@ import * as React from 'react'
 import type { IFiniteElement } from '../../core/fem/elements.ts'
 import type { ElementKind, Mesh } from '../../core/fem/mesh.ts'
 import { ReferenceSquareSvg, ReferenceTriangleSvg, RefToPhysMappingSvg } from '../referenceShapes.tsx'
-import { NODE_COLORS, isHigherOrder, isQuadKind, subscript } from '../shared.ts'
+import { InteractiveMeshView } from '../InteractiveMeshView.tsx'
+import {
+  NODE_COLORS,
+  formatNumber,
+  isHigherOrder,
+  isQuadKind,
+  referenceNodeCoords,
+  subscript,
+} from '../shared.ts'
 
 // Plotly is ~4.5 MB minified; load it only when the space stage is opened.
 const PlotlySurfacePlot = React.lazy(() =>
@@ -17,6 +25,7 @@ export function SpaceStageView({
   mesh,
   elementKind,
   finiteElement,
+  onSelectElement,
 }: {
   dofCount: number
   constrainedDofs: number[]
@@ -25,6 +34,7 @@ export function SpaceStageView({
   mesh: Mesh
   elementKind: ElementKind
   finiteElement: IFiniteElement
+  onSelectElement: (elementId: number) => void
 }) {
   const element = mesh.elements[selectedElementId]
   const basisHeading = (() => {
@@ -141,6 +151,25 @@ export function SpaceStageView({
               ? ' The bilinear map F(ξ,η) = Σᵢ Nᵢ(ξ,η)·xᵢ interpolates the four node positions.'
               : ' The affine map F(ξ,η) = x₁ + J·(ξ,η)ᵀ is fully determined by the three vertex positions.'}
         </p>
+        <div className="map-picker">
+          <div>
+            <h4>Pick the element K</h4>
+            <InteractiveMeshView
+              mesh={mesh}
+              selectedElementId={selectedElementId}
+              onSelectElement={onSelectElement}
+              compact
+            />
+          </div>
+          <div>
+            <h4>Element #{selectedElementId} nodes</h4>
+            <ElementNodeTable
+              mesh={mesh}
+              elementKind={elementKind}
+              nodeIds={element.nodeIds}
+            />
+          </div>
+        </div>
         <RefToPhysMappingSvg
           elementKind={elementKind}
           mesh={mesh}
@@ -167,6 +196,56 @@ export function SpaceStageView({
         constraint stage so users can inspect both the unconstrained and constrained systems.
       </p>
     </section>
+  )
+}
+
+function ElementNodeTable({
+  mesh,
+  elementKind,
+  nodeIds,
+}: {
+  mesh: Mesh
+  elementKind: ElementKind
+  nodeIds: number[]
+}) {
+  const colors = NODE_COLORS[elementKind]
+  const basisLetter = isQuadKind(elementKind) ? 'N' : 'φ'
+  const referenceCoords = referenceNodeCoords(elementKind)
+
+  return (
+    <div className="node-table">
+      <div className="node-row header">
+        <span>local</span>
+        <span>global</span>
+        <span>(ξ, η)</span>
+        <span>(x, y)</span>
+        <span>dof</span>
+      </div>
+      {nodeIds.map((nodeId, index) => {
+        const reference = referenceCoords[index]
+        const physical = mesh.nodes[nodeId].point
+        const constrained = mesh.boundaryNodeIds.has(nodeId)
+        return (
+          <div className="node-row" key={nodeId}>
+            <span className="node-name">
+              <i className="dot" style={{ background: colors[index] }} aria-hidden="true" />
+              {basisLetter}
+              {subscript(index + 1)}
+            </span>
+            <span>{nodeId}</span>
+            <span>
+              ({formatNumber(reference.xi)}, {formatNumber(reference.eta)})
+            </span>
+            <span>
+              ({formatNumber(physical.x)}, {formatNumber(physical.y)})
+            </span>
+            <span className={constrained ? 'node-dof constrained' : 'node-dof'}>
+              {constrained ? 'boundary' : 'free'}
+            </span>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 

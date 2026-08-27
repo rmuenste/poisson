@@ -271,6 +271,7 @@ function App() {
               mesh={snapshot.meshStage.mesh}
               elementKind={snapshot.meshStage.mesh.elementKind}
               finiteElement={snapshot.spaceStage.finiteElement}
+              onSelectElement={handleSelectElement}
             />
           ) : null}
 
