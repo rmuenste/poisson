@@ -15,5 +15,7 @@ export const projectionTopicMeta: Omit<Topic, 'View'> = {
     'The basic iteration and its preconditioners',
     'The five substeps of the PP algorithm',
     'Why the pressure step is a Poisson problem',
+    'A worked example on a small system, computed live',
+    'The same five substeps in a production Fortran solver',
   ],
 }

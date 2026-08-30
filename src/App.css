@@ -1153,3 +1153,105 @@
   margin: 0;
   color: var(--text-muted);
 }
+
+/* ---------- Worked example ---------- */
+
+.cell-grid-block h4 {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.cell-grid {
+  display: grid;
+  gap: 4px;
+}
+
+.cell-grid-item {
+  padding: 10px 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(140, 88, 58, 0.14);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.grid-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.matrix-scroll {
+  overflow-x: auto;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(246, 236, 222, 0.9);
+}
+
+.matrix-grid {
+  display: grid;
+  gap: 2px;
+  min-width: max-content;
+}
+
+.matrix-cell {
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-align: right;
+  background: rgba(255, 251, 245, 0.75);
+  white-space: nowrap;
+}
+
+.matrix-cell.diagonal {
+  background: rgba(216, 110, 59, 0.2);
+  font-weight: 600;
+}
+
+.matrix-cell.zero {
+  color: rgba(95, 103, 120, 0.45);
+  background: transparent;
+  text-align: center;
+}
+
+.flow-figure {
+  max-width: 300px;
+}
+
+.flow-cell {
+  stroke: rgba(140, 88, 58, 0.28);
+  stroke-width: 0.8;
+}
+
+.flow-arrow {
+  stroke: rgba(47, 143, 131, 0.95);
+  stroke-width: 1.5;
+}
+
+.flow-node {
+  fill: rgba(140, 88, 58, 0.4);
+}
+
+.mapping-list {
+  display: grid;
+  gap: 14px;
+}
+
+.mapping-entry .algorithm-step-head h3 {
+  font-size: 0.95rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.mapping-file {
+  margin: 8px 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--accent-deep);
+}

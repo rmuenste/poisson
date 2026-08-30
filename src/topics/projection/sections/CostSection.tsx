@@ -75,8 +75,8 @@ export function CostSection() {
       <article className="mini-card">
         <h3>Next</h3>
         <p className="small-note">
-          A worked example: the five substeps carried out on a small system, with the matrices
-          written out and the divergence checked at every step.
+          The worked example carries the five substeps out on a system small enough to print
+          every number, and the section after it maps them onto a production Fortran solver.
         </p>
       </article>
     </section>
