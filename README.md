@@ -75,8 +75,11 @@ npm run preview
 ## Run The Tests
 
 The test suite (vitest) covers shape functions, quadrature exactness, the
-linear solver, the Dirichlet constraint handler, and an end-to-end convergence
-check of the solution's center value for all four element types:
+linear solver, the Dirichlet constraint handler, an end-to-end convergence
+check of the solution's center value for all four element types, and the
+projection scheme (that `P = B^T Ml^-1 B` really is the 5-point stencil, and
+that the corrected velocity is discretely divergence-free to machine
+precision):
 
 ```bash
 npm test

@@ -29,12 +29,14 @@ Numerical Core → Trace Objects → UI
 | `src/core/pipeline/defaultPipeline.ts` | `SimulationPipeline` — only class that owns end-to-end sequence |
 | `src/core/postprocess/postprocess.ts` | Nodal values, element gradients, solution summary for visualization |
 | `src/core/tracing/traces.ts` | `AssemblyTrace`, `ElementComputationTrace`, `SolverTrace` |
+| `src/core/projection/` | Q~1/Q0 edge mesh, operators (`P = B^T Ml^-1 B`), and the five-substep projection step |
+| `src/core/tracing/projectionTraces.ts` | `ProjectionStepTrace`, `ProjectionRunTrace` |
 | `src/ui/PlotlySurfacePlot.tsx` | Plotly 3D surface plot component |
 | `src/App.tsx` | Application shell — owns the topic menu and nothing else |
 | `src/topics/registry.ts` | The list of topics; the only place that knows which exist |
 | `src/topics/types.ts` | `Topic` interface + `TopicStatus` |
 | `src/topics/poisson/` | The Poisson FEM explorer topic (`PoissonTopic.tsx`, `meta.ts`) |
-| `src/topics/projection/` | Discrete projection (PP) theory topic — `sections/` prose+equations, `figures/` inline SVG |
+| `src/topics/projection/` | Discrete projection (PP) topic — `sections/` prose+equations, `figures/` inline SVG, `example/` live-example views |
 
 ## Key Design Rules
 
